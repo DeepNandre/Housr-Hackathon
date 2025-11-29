@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Phone, MessageSquare, Mic, ArrowRight, Zap, ListTree, Users } from 'lucide-react';
+import { Phone, MessageSquare, Mic, ArrowRight, Zap, ListTree, Users, Bot, Headphones } from 'lucide-react';
 
 export default function DashboardOverview() {
   return (
@@ -58,6 +58,23 @@ export default function DashboardOverview() {
           title="Student Summary"
           description="Compact profile card and AI reply builder."
           color="bg-indigo-50 text-indigo-600"
+        />
+
+        <FeatureCard
+          href="/dashboard/voice-agent"
+          icon={<Bot size={24} />}
+          title="Voice Support Agent"
+          description="AI phone agent for student inquiries & lead capture."
+          color="bg-violet-50 text-violet-600"
+        />
+
+        <FeatureCard
+          href="/dashboard/voice-concierge"
+          icon={<Headphones size={24} />}
+          title="Voice Concierge"
+          description="Interactive voice chat to find perfect housing."
+          color="bg-emerald-50 text-emerald-600"
+          featured={true}
         />
       </div>
 
