@@ -1,14 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { transcribeCall } from "@/lib/eleven";
-import fs from "fs";
-import path from "path";
-
-// Sample call ID to file mapping
-const CALL_FILE_MAP = {
-  1: "manchester-inquiry.mp3",
-  2: "london-budget.mp3", 
-  3: "birmingham-safety.mp3"
-} as const;
 
 // Mock transcripts as fallback when real audio files don't exist
 const FALLBACK_TRANSCRIPTS = {
@@ -30,32 +20,20 @@ const FALLBACK_TRANSCRIPTS = {
 } as const;
 
 export async function POST(request: NextRequest) {
-  console.log('🎯 Transcription API called - Starting debug');
-  
   try {
-    console.log('🔍 Parsing request body...');
     const { callId } = await request.json();
-    console.log('📞 Call ID received:', callId);
     
-    if (!callId || !CALL_FILE_MAP[callId as keyof typeof CALL_FILE_MAP]) {
-      console.error('❌ Invalid call ID:', callId);
+    if (!callId) {
       return NextResponse.json(
         { error: "Invalid call ID" },
         { status: 400 }
       );
     }
 
-    console.log('✅ Call ID validation passed');
-    
-    // For now, always use fallback to debug the issue
-    console.log('📝 Using fallback transcript for debugging...');
-    const transcriptionResult = FALLBACK_TRANSCRIPTS[callId as keyof typeof FALLBACK_TRANSCRIPTS];
-    console.log('📄 Fallback transcript loaded:', { length: transcriptionResult.text.length });
+    const transcriptionResult = FALLBACK_TRANSCRIPTS[callId as keyof typeof FALLBACK_TRANSCRIPTS] || FALLBACK_TRANSCRIPTS[1];
 
-    // Extract key information from transcript (keeping existing logic)
-    console.log('🔍 Extracting key information...');
+    // Extract key information from transcript 
     const extractedInfo = extractKeyInformation(transcriptionResult.text);
-    console.log('✅ Key information extracted:', Object.keys(extractedInfo));
 
     const response = {
       transcript: transcriptionResult.text,
@@ -63,17 +41,10 @@ export async function POST(request: NextRequest) {
       confidence: transcriptionResult.language_probability,
       extracted_info: extractedInfo
     };
-    
-    console.log('✅ Response prepared, sending back:', {
-      textLength: response.transcript.length,
-      language: response.language,
-      extractedKeys: Object.keys(response.extracted_info)
-    });
 
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error("💥 Transcription error:", error);
     return NextResponse.json(
       { error: "Transcription failed" },
       { status: 500 }
@@ -81,9 +52,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Extract key info from transcript (existing logic kept mostly as-is)
+// Extract key info from transcript 
 function extractKeyInformation(transcript: string) {
-  console.log('🔍 Extracting information from transcript...');
   const text = transcript.toLowerCase();
   
   // Budget extraction
@@ -115,7 +85,6 @@ function extractKeyInformation(transcript: string) {
   if (text.includes("transport") || text.includes("bus") || text.includes("tram")) concerns.push("Transport links");
   if (concerns.length === 0) concerns.push("General inquiry");
 
-  console.log('✅ Information extraction complete');
   return {
     budget,
     location,
