@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mic, MicOff, Send, Bot, Sparkles, Volume2, VolumeX, Loader2, Home } from "lucide-react";
+import { Mic, MicOff, Send, Bot, Sparkles, Volume2, VolumeX, Loader2, Home } from "lucide-react";
 
 type SpeechRecognition = any;
 type SpeechRecognitionEvent = any;
@@ -31,8 +31,6 @@ export default function PublicVoiceConcierge() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [playback, setPlayback] = useState<HTMLAudioElement | null>(null);
   const [autoSpeak, setAutoSpeak] = useState(true);
   
   const [messages, setMessages] = useState<ChatBubble[]>([]);
@@ -44,32 +42,30 @@ export default function PublicVoiceConcierge() {
   const [interimTranscript, setInterimTranscript] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [waitingForInput, setWaitingForInput] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isProcessingRef = useRef(false);
   const playbackRef = useRef<HTMLAudioElement | null>(null);
+  const isSpeakingRef = useRef(false);
 
-  // Cleanup on unmount - stop audio and speech recognition
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Stop any playing audio
       if (playbackRef.current) {
         playbackRef.current.pause();
         playbackRef.current.src = "";
         playbackRef.current = null;
       }
-      // Stop speech recognition
       if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {}
+        try { recognitionRef.current.stop(); } catch (e) {}
         recognitionRef.current = null;
       }
     };
   }, []);
 
-  // Initialize speech recognition
+  // Initialize speech recognition (but don't start it yet)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition =
@@ -82,12 +78,18 @@ export default function PublicVoiceConcierge() {
       }
 
       const recog = new SpeechRecognition();
-      recog.continuous = true;
+      recog.continuous = false; // Changed to false - single utterance mode
       recog.interimResults = true;
       recog.lang = "en-US";
       recog.maxAlternatives = 1;
 
       recog.onresult = (event: SpeechRecognitionEvent) => {
+        // Don't process if bot is speaking
+        if (isSpeakingRef.current) {
+          console.log("[Mic] Ignoring - bot is speaking");
+          return;
+        }
+
         let interim = "";
         let final = "";
 
@@ -103,7 +105,9 @@ export default function PublicVoiceConcierge() {
         setInterimTranscript(interim);
 
         if (final && !isProcessingRef.current) {
+          console.log("[Mic] Final transcript:", final);
           setInterimTranscript("");
+          setIsListening(false);
           processUserMessage(final.trim());
         }
       };
@@ -111,36 +115,71 @@ export default function PublicVoiceConcierge() {
       recog.onerror = (event: any) => {
         console.error("Speech recognition error:", event.error);
         if (event.error === "not-allowed") {
-          setError("Microphone access denied. Please allow microphone access and try again.");
+          setError("Microphone access denied. Please allow microphone access.");
           setSpeechSupported(false);
         }
+        setIsListening(false);
       };
 
       recog.onend = () => {
-        if (isListening && !isProcessingRef.current) {
-          try {
-            recog.start();
-          } catch (e) {}
-        }
+        console.log("[Mic] Recognition ended");
+        setIsListening(false);
       };
 
       recognitionRef.current = recog;
     }
   }, []);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, interimTranscript]);
 
+  // Stop mic while bot is speaking
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+    }
+    setIsListening(false);
+    setInterimTranscript("");
+  }, []);
+
+  // Start listening for user input
+  const startListening = useCallback(() => {
+    if (!recognitionRef.current || isSpeakingRef.current || isProcessingRef.current) {
+      console.log("[Mic] Cannot start - speaking or processing");
+      return;
+    }
+    
+    try {
+      recognitionRef.current.start();
+      setIsListening(true);
+      console.log("[Mic] Started listening");
+    } catch (e) {
+      console.error("[Mic] Failed to start:", e);
+    }
+  }, []);
+
+  // Speak with TTS - STOPS mic first, resumes after
   const speak = useCallback(async (text: string) => {
-    if (!autoSpeak) return;
+    if (!autoSpeak) {
+      setWaitingForInput(true);
+      return;
+    }
+    
     const trimmed = text.trim();
     if (!trimmed) return;
     
+    // STOP listening before speaking
+    stopListening();
+    isSpeakingRef.current = true;
     setIsSpeaking(true);
+    setWaitingForInput(false);
     setError(null);
+    
+    console.log("[TTS] Speaking:", trimmed.substring(0, 50) + "...");
     
     try {
       const res = await fetch(`${backendUrl}/tts`, {
@@ -154,27 +193,44 @@ export default function PublicVoiceConcierge() {
       const buffer = await res.arrayBuffer();
       const blob = new Blob([buffer], { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
-      setAudioUrl(url);
 
       // Stop any existing playback
       if (playbackRef.current) {
         playbackRef.current.pause();
         playbackRef.current.src = "";
       }
-      if (playback) playback.pause();
       
       const audio = new Audio(url);
-      audio.onended = () => setIsSpeaking(false);
-      audio.onerror = () => setIsSpeaking(false);
-      playbackRef.current = audio; // Store in ref for cleanup
-      setPlayback(audio);
+      playbackRef.current = audio;
+      
+      audio.onended = () => {
+        console.log("[TTS] Finished speaking");
+        isSpeakingRef.current = false;
+        setIsSpeaking(false);
+        setWaitingForInput(true);
+        // Small delay before allowing mic again
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 100);
+      };
+      
+      audio.onerror = () => {
+        console.error("[TTS] Audio error");
+        isSpeakingRef.current = false;
+        setIsSpeaking(false);
+        setWaitingForInput(true);
+      };
+      
       await audio.play();
     } catch (err: any) {
-      console.error("Voice generation error:", err);
+      console.error("[TTS] Error:", err);
+      isSpeakingRef.current = false;
       setIsSpeaking(false);
+      setWaitingForInput(true);
     }
-  }, [autoSpeak, playback, backendUrl]);
+  }, [autoSpeak, backendUrl, stopListening]);
 
+  // Send message to AI backend
   const sendToAI = useCallback(async (userMessage: string) => {
     const res = await fetch(`${backendUrl}/chat`, {
       method: "POST",
@@ -189,37 +245,46 @@ export default function PublicVoiceConcierge() {
     return res.json();
   }, [messages, preferences, backendUrl]);
 
+  // Process user's message
   const processUserMessage = useCallback(async (text: string) => {
     if (!text.trim() || isProcessingRef.current) return;
     
+    // Stop listening while processing
+    stopListening();
     isProcessingRef.current = true;
     setIsLoading(true);
+    setWaitingForInput(false);
     setError(null);
 
+    console.log("[Chat] Processing:", text);
     setMessages(prev => [...prev, { role: "user", text: text.trim() }]);
 
     try {
       const result = await sendToAI(text.trim());
+      console.log("[Chat] AI response:", result.response?.substring(0, 50) + "...");
+      
       setPreferences(result.preferences);
       setMessages(prev => [...prev, { role: "bot", text: result.response }]);
-      speak(result.response);
-
+      
       if (result.shouldFinalize && result.recommendations) {
         setRecommendations(result.recommendations);
         setFinished(true);
       }
+      
+      // Speak the response (this will set waitingForInput after)
+      await speak(result.response);
+      
     } catch (err: any) {
-      console.error("Error processing message:", err);
-      setError("Sorry, I had trouble understanding. Could you try again?");
-      const fallback = "I'm having a bit of trouble. Could you tell me more about what you're looking for?";
-      setMessages(prev => [...prev, { role: "bot", text: fallback }]);
-      speak(fallback);
+      console.error("[Chat] Error:", err);
+      setError("Sorry, something went wrong. Please try again.");
+      setWaitingForInput(true);
     } finally {
       setIsLoading(false);
       isProcessingRef.current = false;
     }
-  }, [sendToAI, speak]);
+  }, [sendToAI, speak, stopListening]);
 
+  // Start the conversation
   const beginJourney = useCallback(() => {
     if (started) return;
     setStarted(true);
@@ -233,13 +298,15 @@ export default function PublicVoiceConcierge() {
     speak(greeting);
   }, [started, speak]);
 
+  // Handle typed message send
   const handleSend = useCallback(() => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || isSpeaking) return;
     const current = inputValue.trim();
     setInputValue("");
     processUserMessage(current);
-  }, [inputValue, isLoading, processUserMessage]);
+  }, [inputValue, isLoading, isSpeaking, processUserMessage]);
 
+  // Handle Enter key
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -247,39 +314,40 @@ export default function PublicVoiceConcierge() {
     }
   }, [handleSend]);
 
+  // Toggle mic button - manual control
   const toggleListening = useCallback(() => {
-    if (!recognitionRef.current) return;
+    if (isSpeaking || isLoading) {
+      console.log("[Mic] Cannot toggle - bot speaking or loading");
+      return;
+    }
     
     if (isListening) {
-      setIsListening(false);
-      setInterimTranscript("");
-      recognitionRef.current.stop();
+      stopListening();
     } else {
-      setIsListening(true);
-      try {
-        recognitionRef.current.start();
-      } catch (e) {}
+      startListening();
     }
-  }, [isListening]);
+  }, [isListening, isSpeaking, isLoading, stopListening, startListening]);
 
+  // Reset conversation
   const resetConversation = useCallback(() => {
-    // Stop any playing audio
+    // Stop everything
+    stopListening();
     if (playbackRef.current) {
       playbackRef.current.pause();
       playbackRef.current.src = "";
     }
-    if (playback) playback.pause();
+    isSpeakingRef.current = false;
+    isProcessingRef.current = false;
     
     setStarted(false);
     setFinished(false);
     setMessages([]);
     setRecommendations([]);
     setPreferences({ amenities: [] });
-    setIsListening(false);
-    setInterimTranscript("");
     setIsSpeaking(false);
-    if (recognitionRef.current) recognitionRef.current.stop();
-  }, [playback]);
+    setWaitingForInput(false);
+    setInterimTranscript("");
+  }, [stopListening]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#063324] via-[#0a4a38] to-[#063324]">
@@ -321,7 +389,7 @@ export default function PublicVoiceConcierge() {
               Find Your Perfect Home
             </h1>
             <p className="text-white/70 text-lg max-w-xl mx-auto">
-              Just talk to our AI assistant. Tell us what you need and we&apos;ll find the best student accommodation for you.
+              Answer 3 simple questions and get personalized accommodation recommendations.
             </p>
           </div>
 
@@ -332,14 +400,20 @@ export default function PublicVoiceConcierge() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    isSpeaking ? "bg-emerald-400 animate-pulse" : "bg-white/20"
+                    isSpeaking ? "bg-emerald-400 animate-pulse" : 
+                    isListening ? "bg-red-500 animate-pulse" :
+                    waitingForInput ? "bg-amber-400" : "bg-white/20"
                   }`}>
-                    {isSpeaking ? "🔊" : "🎧"}
+                    {isSpeaking ? "🔊" : isListening ? "🎤" : waitingForInput ? "👂" : "🎧"}
                   </div>
                   <div>
                     <div className="font-semibold">Voice Concierge</div>
                     <div className="text-sm text-white/70">
-                      {isSpeaking ? "Speaking..." : started ? "Ready to help" : "Click to start"}
+                      {isSpeaking ? "Speaking... please wait" : 
+                       isListening ? "Listening... speak now!" :
+                       isLoading ? "Thinking..." :
+                       waitingForInput ? "Your turn - click mic or type" :
+                       started ? "Ready" : "Click to start"}
                     </div>
                   </div>
                 </div>
@@ -349,7 +423,7 @@ export default function PublicVoiceConcierge() {
                       onClick={beginJourney}
                       className="px-6 py-3 rounded-full bg-white text-[#063324] font-bold hover:scale-105 transition flex items-center gap-2"
                     >
-                      🎙️ Start Talking
+                      🎙️ Start Conversation
                     </button>
                   ) : (
                     <>
@@ -361,7 +435,7 @@ export default function PublicVoiceConcierge() {
                           Start Over
                         </button>
                       )}
-                      {speechSupported && (
+                      {speechSupported && !finished && (
                         <button
                           onClick={toggleListening}
                           disabled={isLoading || isSpeaking}
@@ -369,7 +443,7 @@ export default function PublicVoiceConcierge() {
                             isListening
                               ? "bg-red-500 text-white animate-pulse"
                               : "bg-white text-[#063324] hover:scale-105"
-                          } disabled:opacity-50`}
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                           {isListening ? <><MicOff size={18} /> Stop</> : <><Mic size={18} /> Speak</>}
                         </button>
@@ -399,8 +473,8 @@ export default function PublicVoiceConcierge() {
               {messages.length === 0 && !started && (
                 <div className="text-center py-16 text-gray-400">
                   <Bot size={64} className="mx-auto mb-4 opacity-30" />
-                  <p className="text-lg">Click &quot;Start Talking&quot; to begin</p>
-                  <p className="text-sm mt-2">I&apos;ll help you find your perfect student home</p>
+                  <p className="text-lg">Click &quot;Start Conversation&quot; to begin</p>
+                  <p className="text-sm mt-2">I&apos;ll ask you 3 questions to find your perfect home</p>
                 </div>
               )}
               {messages.map((m, idx) => (
@@ -437,7 +511,11 @@ export default function PublicVoiceConcierge() {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   disabled={!started || isLoading || isSpeaking}
-                  placeholder={!started ? "Click 'Start Talking' to begin" : "Type your message..."}
+                  placeholder={
+                    !started ? "Click 'Start Conversation' to begin" : 
+                    isSpeaking ? "Wait for the assistant to finish..." :
+                    "Type your answer or click the mic to speak..."
+                  }
                   className="flex-1 px-5 py-3 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#063324]/30 disabled:bg-gray-100 disabled:text-gray-400"
                 />
                 <button
@@ -490,12 +568,6 @@ export default function PublicVoiceConcierge() {
                 {preferences.vibe && (
                   <span className="px-3 py-1 bg-white/20 rounded-full text-sm">✨ {preferences.vibe}</span>
                 )}
-                {preferences.moveInDate && (
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm">📅 {preferences.moveInDate}</span>
-                )}
-                {preferences.roomType && (
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm">🏠 {preferences.roomType}</span>
-                )}
               </div>
               {/* Progress indicator */}
               <div className="mt-4 flex items-center gap-2">
@@ -514,11 +586,10 @@ export default function PublicVoiceConcierge() {
           {/* Tips */}
           <div className="mt-8 text-center text-white/60 text-sm space-y-1">
             <p>💡 <strong>3 simple questions:</strong> Location → Budget → Vibe</p>
-            <p className="text-xs">Example: &quot;Manchester&quot; → &quot;£180 a week&quot; → &quot;Social and lively&quot;</p>
+            <p className="text-xs">Click the mic button when it&apos;s your turn to speak</p>
           </div>
         </div>
       </main>
     </div>
   );
 }
-

@@ -8,3 +8,12 @@
    - Environments: .env.local
 
  ✓ Starting...
+ ✓ Ready in 13.8s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 875ms (220 modules)
+ ○ Compiling /api/test ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (176kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, stat '/Users/deepnandre/Desktop/HousrxHackathon/.next/cache/webpack/server-development/0.pack.gz'
+ ✓ Compiled /api/test in 3.4s (296 modules)
+ POST /api/test 200 in 3618ms
+[?25h
