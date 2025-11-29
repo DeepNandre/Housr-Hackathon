@@ -186,8 +186,8 @@ export default function ReplyEngine() {
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
 
   // ElevenLabs Config
-  const ELEVENLABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
-  const ELEVENLABS_VOICE_ID = process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID;
+  const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+  const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
   const ELEVENLABS_MODEL_ID = "eleven_multilingual_v2";
 
   const handleGenerate = () => {
