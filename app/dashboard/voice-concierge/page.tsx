@@ -1,269 +1,291 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mic, MicOff, Send, Bot, Sparkles } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Bot, Sparkles, Volume2, VolumeX, Loader2 } from "lucide-react";
 
 type SpeechRecognition = any;
 type SpeechRecognitionEvent = any;
 
 type ChatBubble = { role: "bot" | "user"; text: string };
 
+interface UserPreferences {
+  city?: string;
+  budget?: string;
+  moveInDate?: string;
+  roomType?: string;
+  amenities: string[];
+  otherNotes: string[];
+}
+
+interface Recommendation {
+  title: string;
+  price: string;
+  summary: string;
+}
+
 export default function VoiceConcierge() {
-  // Use local Next.js API routes instead of external Python backend
   const backendUrl = "/api/voice-concierge";
   
   const [started, setStarted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [playback, setPlayback] = useState<HTMLAudioElement | null>(null);
-  const [messages, setMessages] = useState<ChatBubble[]>([
-    {
-      role: "bot",
-      text: "Welcome to Housr! Tell me what you need and I&apos;ll speak back with next steps.",
-    },
-  ]);
-  const [askedCount, setAskedCount] = useState(0);
-  const [questionLimit, setQuestionLimit] = useState(5);
+  const [autoSpeak, setAutoSpeak] = useState(true);
+  
+  const [messages, setMessages] = useState<ChatBubble[]>([]);
+  const [preferences, setPreferences] = useState<UserPreferences>({ amenities: [], otherNotes: [] });
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [finished, setFinished] = useState(false);
-  const [recommendations, setRecommendations] = useState<
-    { title: string; price: string; summary: string }[]
-  >([]);
-  const [lastBotText, setLastBotText] = useState(
-    "Welcome to Housr! Tell me what you need and I&apos;ll speak back with next steps."
-  );
+  
   const [inputValue, setInputValue] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const processUserMessageRef = useRef<(text: string) => void>(() => {});
-  const sessionId = React.useMemo(() => `session_${Date.now()}`, []);
-  const agentId = process.env.NEXT_PUBLIC_ELEVEN_AGENT_ID || "";
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isProcessingRef = useRef(false);
 
-  const followUps = [
-    "When do you need to move in?",
-    "What monthly budget works for you?",
-    "Do you prefer studio, en-suite, or shared?",
-    "Any must-haves like bills included or near campus?",
-    "Want me to line up a virtual tour or in-person viewing?",
-  ];
-
+  // Initialize speech recognition with interim results
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition =
         (window as any).SpeechRecognition ||
         (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recog = new SpeechRecognition();
-        recog.continuous = true;
-        recog.interimResults = false;
-        recog.lang = "en-US";
-        recog.onresult = (event: SpeechRecognitionEvent) => {
-          const lastResultIndex = event.results.length - 1;
-          const transcript = event.results[lastResultIndex][0].transcript;
-          setInputValue("");
-          processUserMessageRef.current(transcript);
-        };
-        recog.onend = () => {
-          if (isListening) {
-            recog.start();
-          }
-        };
-        recognitionRef.current = recog;
+      
+      if (!SpeechRecognition) {
+        setSpeechSupported(false);
+        return;
       }
-    }
-  }, [isListening]);
 
+      const recog = new SpeechRecognition();
+      recog.continuous = true;
+      recog.interimResults = true; // Enable interim results for live feedback
+      recog.lang = "en-US";
+      recog.maxAlternatives = 1;
+
+      recog.onresult = (event: SpeechRecognitionEvent) => {
+        let interim = "";
+        let final = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            final += transcript;
+          } else {
+            interim += transcript;
+          }
+        }
+
+        setInterimTranscript(interim);
+
+        if (final && !isProcessingRef.current) {
+          setInterimTranscript("");
+          processUserMessage(final.trim());
+        }
+      };
+
+      recog.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === "not-allowed") {
+          setError("Microphone access denied. Please allow microphone access and try again.");
+          setSpeechSupported(false);
+        }
+      };
+
+      recog.onend = () => {
+        // Restart if still listening and not processing
+        if (isListening && !isProcessingRef.current) {
+          try {
+            recog.start();
+          } catch (e) {
+            // Already started
+          }
+        }
+      };
+
+      recognitionRef.current = recog;
+    }
+  }, []);
+
+  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, interimTranscript]);
 
-  const speak = async (text: string) => {
+  // Speak text using TTS
+  const speak = useCallback(async (text: string) => {
+    if (!autoSpeak) return;
+    
     const trimmed = text.trim();
     if (!trimmed) return;
-    setIsLoading(true);
+    
+    setIsSpeaking(true);
     setError(null);
+    
     try {
       const res = await fetch(`${backendUrl}/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: trimmed,
-          agent_id: agentId,
-          stream: false,
-          output_format: "mp3_44100_128",
-        }),
+        body: JSON.stringify({ text: trimmed }),
       });
 
       if (!res.ok) {
-        const message = await res.text();
-        throw new Error(
-          message || `TTS request failed with status ${res.status}`
-        );
+        throw new Error(`TTS failed: ${res.status}`);
       }
 
       const buffer = await res.arrayBuffer();
-      const contentType = res.headers.get("content-type") || "audio/mpeg";
-      const blob = new Blob([buffer], { type: contentType });
+      const blob = new Blob([buffer], { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
 
       if (playback) {
         playback.pause();
-        playback.currentTime = 0;
       }
+      
       const audio = new Audio(url);
+      audio.onended = () => setIsSpeaking(false);
+      audio.onerror = () => setIsSpeaking(false);
       setPlayback(audio);
       await audio.play();
     } catch (err: any) {
-      let errorMessage = err?.message || "Unable to generate speech";
-      if (err.name === "TypeError" && err.message.includes("fetch")) {
-        errorMessage = `Cannot connect to backend. Make sure the API routes are working.`;
-      }
-      setError(errorMessage);
       console.error("Voice generation error:", err);
+      setIsSpeaking(false);
+      // Don't show error - just skip voice
+    }
+  }, [autoSpeak, playback, backendUrl]);
+
+  // Send message to AI chat endpoint
+  const sendToAI = useCallback(async (userMessage: string): Promise<{
+    response: string;
+    preferences: UserPreferences;
+    shouldFinalize: boolean;
+    recommendations: Recommendation[] | null;
+  }> => {
+    const res = await fetch(`${backendUrl}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: userMessage,
+        conversationHistory: messages,
+        preferences,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Chat API failed");
+    }
+
+    return res.json();
+  }, [messages, preferences, backendUrl]);
+
+  // Process user message
+  const processUserMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isProcessingRef.current) return;
+    
+    isProcessingRef.current = true;
+    setIsLoading(true);
+    setError(null);
+
+    // Add user message
+    setMessages(prev => [...prev, { role: "user", text: text.trim() }]);
+
+    try {
+      const result = await sendToAI(text.trim());
+      
+      // Update preferences
+      setPreferences(result.preferences);
+      
+      // Add bot response
+      setMessages(prev => [...prev, { role: "bot", text: result.response }]);
+      
+      // Speak the response
+      speak(result.response);
+
+      // Handle finalization
+      if (result.shouldFinalize && result.recommendations) {
+        setRecommendations(result.recommendations);
+        setFinished(true);
+      }
+    } catch (err: any) {
+      console.error("Error processing message:", err);
+      setError("Sorry, I had trouble understanding. Could you try again?");
+      // Add a fallback response
+      const fallback = "I'm having a bit of trouble. Could you tell me more about what you're looking for?";
+      setMessages(prev => [...prev, { role: "bot", text: fallback }]);
+      speak(fallback);
     } finally {
       setIsLoading(false);
+      isProcessingRef.current = false;
     }
-  };
+  }, [sendToAI, speak]);
 
-  const beginJourney = () => {
+  // Begin conversation
+  const beginJourney = useCallback(() => {
     if (started) return;
     setStarted(true);
     setFinished(false);
-    const limit = Math.floor(Math.random() * 4) + 5; // 5-8 questions
-    setQuestionLimit(limit);
-    const prompt =
-      "Tell me about the city, timing, budget, and anything you care about.";
-    setMessages((prev) => [...prev, { role: "bot", text: prompt }]);
-    setAskedCount(1);
-    speak(prompt);
-    setLastBotText(prompt);
-  };
+    setMessages([]);
+    setRecommendations([]);
+    setPreferences({ amenities: [], otherNotes: [] });
+    
+    const greeting = "Hi! I'm your Housr housing assistant. I'll help you find the perfect student accommodation. Tell me - what city are you looking in, and when do you need to move?";
+    setMessages([{ role: "bot", text: greeting }]);
+    speak(greeting);
+  }, [started, speak]);
 
-  const nextFollowUp = () =>
-    followUps[Math.floor(Math.random() * followUps.length)];
-
-  const buildSmartReply = (userText: string) => {
-    const lower = userText.toLowerCase();
-    const cityMatch = lower.match(/(?:in|at)\s+([a-z\s]+)/i);
-    const budgetMatch = userText.match(/([£$]\s?\d{3,4})/);
-    const wantsStudio = lower.includes("studio");
-    const wantsShared = lower.includes("shared");
-    const wantsEnsuite = lower.includes("en-suite") || lower.includes("ensuite");
-
-    const snippets = [];
-    if (cityMatch) snippets.push(`Noted city preference: ${cityMatch[1].trim()}.`);
-    if (budgetMatch) snippets.push(`Targeting options around ${budgetMatch[1]}.`);
-    if (wantsStudio) snippets.push("Studio-friendly picks added.");
-    if (wantsShared) snippets.push("Including calm shared houses.");
-    if (wantsEnsuite) snippets.push("Prioritizing en-suite rooms.");
-
-    const follow = nextFollowUp();
-    const base = snippets.length
-      ? snippets.join(" ")
-      : "Got it. I&apos;ll tailor options.";
-    return `${base} ${follow}`;
-  };
-
-  const processUserMessage = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
-    if (finished) return;
-
-    const totalAsked = askedCount;
-    if (totalAsked >= questionLimit) {
-      finalizeConversation(trimmed);
-      return;
-    }
-
-    const reply = buildSmartReply(trimmed);
-    setMessages((prev) => [...prev, { role: "bot", text: reply }]);
-    setLastBotText(reply);
-    setAskedCount((prev) => prev + 1);
-    speak(reply);
-  };
-  processUserMessageRef.current = processUserMessage;
-
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
-    const current = inputValue;
+  // Handle manual send
+  const handleSend = useCallback(() => {
+    if (!inputValue.trim() || isLoading) return;
+    const current = inputValue.trim();
     setInputValue("");
     processUserMessage(current);
-  };
+  }, [inputValue, isLoading, processUserMessage]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  // Handle enter key
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
-  };
+  }, [handleSend]);
 
-  const finalizeConversation = (lastAnswer: string) => {
-    const closing =
-      "Thanks. I have enough to suggest some places. Want me to call a representative for you?";
-    const recs = [
-      {
-        title: "City Centre En-Suite",
-        price: "$820/mo",
-        summary: "Bills included, 8 min walk to campus, quiet block.",
-      },
-      {
-        title: "Shared House Near Uni",
-        price: "$690/mo",
-        summary: "3-bed shared, garden space, utilities capped.",
-      },
-      {
-        title: "Modern Studio",
-        price: "$940/mo",
-        summary: "Gym onsite, furnished, flexible lease start.",
-      },
-    ];
-    setRecommendations(recs);
-    setMessages((prev) => [...prev, { role: "bot", text: closing }]);
-    setLastBotText(closing);
-    speak(closing);
-    setFinished(true);
-    logSession(recs, lastAnswer);
-  };
-
-  const logSession = async (
-    recs: { title: string; price: string; summary: string }[],
-    lastAnswer: string
-  ) => {
-    try {
-      await fetch(`${backendUrl}/session-log`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: sessionId,
-          conversation: messages.concat([
-            { role: "user", text: lastAnswer },
-            { role: "bot", text: "Session ended with recommendations." },
-          ]),
-          recommendations: recs,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to log session", err);
-    }
-  };
-
-  const startListening = () => {
-    if (!recognitionRef.current || isListening) return;
-    setIsListening(true);
-    recognitionRef.current.start();
-  };
-
-  const stopListening = () => {
+  // Toggle listening
+  const toggleListening = useCallback(() => {
     if (!recognitionRef.current) return;
+    
+    if (isListening) {
+      setIsListening(false);
+      setInterimTranscript("");
+      recognitionRef.current.stop();
+    } else {
+      setIsListening(true);
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        // Already started
+      }
+    }
+  }, [isListening]);
+
+  // Reset conversation
+  const resetConversation = useCallback(() => {
+    setStarted(false);
+    setFinished(false);
+    setMessages([]);
+    setRecommendations([]);
+    setPreferences({ amenities: [], otherNotes: [] });
     setIsListening(false);
-    recognitionRef.current.stop();
-  };
+    setInterimTranscript("");
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -278,14 +300,23 @@ export default function VoiceConcierge() {
             Back to Dashboard
           </Link>
 
-          <div className="bg-white/70 backdrop-blur border border-[#063324]/10 rounded-2xl px-4 py-3 text-sm text-[#063324] shadow-sm flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#063324] text-white flex items-center justify-center font-bold">
-              AI
-            </div>
-            <div>
-              <div className="font-semibold">Live Voice</div>
-              <div className="text-xs text-[#063324]/70">
-                Powered by ElevenLabs
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setAutoSpeak(!autoSpeak)}
+              className={`p-2 rounded-full transition-colors ${
+                autoSpeak ? "bg-emerald-100 text-emerald-600" : "bg-gray-100 text-gray-400"
+              }`}
+              title={autoSpeak ? "Voice On" : "Voice Off"}
+            >
+              {autoSpeak ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            </button>
+            <div className="bg-white/70 backdrop-blur border border-[#063324]/10 rounded-2xl px-4 py-3 text-sm text-[#063324] shadow-sm flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#063324] text-white flex items-center justify-center font-bold">
+                AI
+              </div>
+              <div>
+                <div className="font-semibold">Live Voice</div>
+                <div className="text-xs text-[#063324]/70">Powered by ElevenLabs</div>
               </div>
             </div>
           </div>
@@ -296,12 +327,8 @@ export default function VoiceConcierge() {
             <Bot className="text-white" size={28} />
           </div>
           <div>
-            <h1 className="text-4xl font-bold text-[#063324]">
-              Voice Concierge
-            </h1>
-            <p className="text-gray-500">
-              Speak with our AI to find your perfect student housing
-            </p>
+            <h1 className="text-4xl font-bold text-[#063324]">Voice Concierge</h1>
+            <p className="text-gray-500">Speak naturally to find your perfect student housing</p>
           </div>
         </div>
       </header>
@@ -313,94 +340,109 @@ export default function VoiceConcierge() {
             {/* Status Bar */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#063324] text-white flex items-center justify-center font-bold">
-                  🎧
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold transition-colors ${
+                  isSpeaking ? "bg-emerald-500 text-white animate-pulse" : "bg-[#063324] text-white"
+                }`}>
+                  {isSpeaking ? "🔊" : "🎧"}
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-[#063324]/70 uppercase tracking-[0.2em]">
                     Voice Chat
                   </div>
                   <div className="text-xl font-bold text-[#063324]">
-                    Talk to the Bot
+                    {isSpeaking ? "Speaking..." : "Talk to the Bot"}
                   </div>
                 </div>
               </div>
-              <div
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  isLoading
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-green-100 text-green-700"
-                }`}
-              >
-                {isLoading
-                  ? "Speaking..."
-                  : started
-                  ? isListening
-                    ? "Mic Live"
-                    : "Waiting for you"
-                  : "Ready"}
+              <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                isLoading ? "bg-yellow-100 text-yellow-700" :
+                isListening ? "bg-red-100 text-red-700 animate-pulse" :
+                isSpeaking ? "bg-emerald-100 text-emerald-700" :
+                started ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+              }`}>
+                {isLoading ? "Thinking..." :
+                 isListening ? "🎤 Listening..." :
+                 isSpeaking ? "Speaking" :
+                 started ? "Ready" : "Tap to Start"}
               </div>
             </div>
 
             {/* Control Panel */}
             <div className="bg-gradient-to-r from-[#063324] to-[#0c4c37] text-white rounded-2xl p-5 flex flex-wrap gap-3 items-center justify-between shadow-lg shadow-[#063324]/20">
               <div>
-                <div className="text-xs uppercase tracking-[0.3em] text-white/70">
-                  Status
-                </div>
+                <div className="text-xs uppercase tracking-[0.3em] text-white/70">Status</div>
                 <div className="font-semibold">
-                  {started
-                    ? isListening
-                      ? "Listening..."
-                      : "Say something or type"
-                    : "Tap start to begin"}
+                  {!started ? "Ready to begin" :
+                   isListening ? "Speak now - I'm listening" :
+                   isSpeaking ? "Please wait, I'm responding" :
+                   "Say something or type below"}
                 </div>
               </div>
               <div className="flex gap-3">
-                {!started && (
+                {!started ? (
                   <button
                     onClick={beginJourney}
-                    className="px-4 py-2 rounded-full bg-white text-[#063324] font-bold hover:scale-105 transition"
+                    className="px-5 py-2.5 rounded-full bg-white text-[#063324] font-bold hover:scale-105 transition"
                   >
-                    Begin Journey
+                    🎙️ Begin Journey
                   </button>
+                ) : (
+                  <>
+                    {finished && (
+                      <button
+                        onClick={resetConversation}
+                        className="px-4 py-2 rounded-full bg-white/20 text-white font-bold border border-white/30 hover:bg-white/30 transition"
+                      >
+                        Start Over
+                      </button>
+                    )}
+                    {speechSupported && (
+                      <button
+                        onClick={toggleListening}
+                        disabled={isLoading || isSpeaking}
+                        className={`px-4 py-2 rounded-full font-bold flex items-center gap-2 transition ${
+                          isListening
+                            ? "bg-red-500 text-white border-2 border-white"
+                            : "bg-white text-[#063324] hover:scale-105"
+                        } disabled:opacity-50`}
+                      >
+                        {isListening ? <><MicOff size={18} /> Stop</> : <><Mic size={18} /> Speak</>}
+                      </button>
+                    )}
+                  </>
                 )}
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={!started}
-                  className={`px-4 py-2 rounded-full font-bold border border-white/50 flex items-center gap-2 ${
-                    isListening
-                      ? "bg-white/20 text-white"
-                      : "bg-white text-[#063324]"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {isListening ? (
-                    <>
-                      <MicOff size={16} /> Stop
-                    </>
-                  ) : (
-                    <>
-                      <Mic size={16} /> Speak
-                    </>
-                  )}
-                </button>
               </div>
             </div>
+
+            {/* Live Transcription Feedback */}
+            {interimTranscript && (
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 animate-pulse">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Loader2 className="animate-spin" size={16} />
+                  <span className="text-sm font-medium">Hearing:</span>
+                </div>
+                <p className="text-blue-800 mt-1 italic">&quot;{interimTranscript}&quot;</p>
+              </div>
+            )}
 
             {/* Chat Messages */}
             <div
               ref={scrollRef}
               className="space-y-4 max-h-[400px] overflow-y-auto pr-2 bg-[#F8FBF9] border border-[#063324]/10 rounded-2xl p-4"
             >
+              {messages.length === 0 && !started && (
+                <div className="text-center py-12 text-gray-400">
+                  <Bot size={48} className="mx-auto mb-4 opacity-30" />
+                  <p>Click &quot;Begin Journey&quot; to start chatting</p>
+                </div>
+              )}
               {messages.map((m, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`px-4 py-3 rounded-2xl max-w-[80%] text-sm leading-relaxed ${
+                    className={`px-4 py-3 rounded-2xl max-w-[85%] text-sm leading-relaxed ${
                       m.role === "user"
                         ? "bg-[#063324] text-white rounded-br-none"
                         : "bg-white text-[#063324] border border-[#063324]/10 rounded-bl-none shadow-sm"
@@ -410,6 +452,16 @@ export default function VoiceConcierge() {
                   </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white text-[#063324] border border-[#063324]/10 rounded-2xl rounded-bl-none shadow-sm px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="animate-spin" size={16} />
+                      <span className="text-sm text-gray-500">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Input Area */}
@@ -418,15 +470,18 @@ export default function VoiceConcierge() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                disabled={!started || isLoading}
+                disabled={!started || isLoading || isSpeaking}
                 placeholder={
-                  started ? "Type or dictate your answer..." : "Tap start first"
+                  !started ? "Click 'Begin Journey' to start" :
+                  isLoading ? "Processing..." :
+                  isSpeaking ? "Waiting for response..." :
+                  "Type your message or use the mic..."
                 }
                 className="flex-1 px-4 py-3 rounded-2xl border border-[#063324]/15 bg-white focus:outline-none focus:ring-2 focus:ring-[#063324]/30 disabled:bg-gray-100 disabled:text-gray-400"
               />
               <button
                 onClick={handleSend}
-                disabled={!started || isLoading || !inputValue.trim()}
+                disabled={!started || isLoading || isSpeaking || !inputValue.trim()}
                 className="p-3 rounded-2xl bg-[#063324] text-white font-semibold hover:translate-y-[-1px] transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Send size={20} />
@@ -435,28 +490,24 @@ export default function VoiceConcierge() {
 
             {/* Recommendations */}
             {finished && recommendations.length > 0 && (
-              <div className="space-y-3 pt-2">
+              <div className="space-y-4 pt-4 border-t border-[#063324]/10">
                 <div className="text-sm font-semibold text-[#063324]/70 uppercase tracking-[0.2em]">
-                  Recommendations
+                  🏠 Your Matches
                 </div>
                 <div className="grid sm:grid-cols-3 gap-3">
-                  {recommendations.map((rec) => (
+                  {recommendations.map((rec, idx) => (
                     <div
-                      key={rec.title}
-                      className="border border-[#063324]/10 rounded-2xl p-4 bg-gradient-to-br from-white to-[#F8FBF9] shadow-sm hover:shadow-md transition-shadow"
+                      key={idx}
+                      className="border border-[#063324]/10 rounded-2xl p-4 bg-gradient-to-br from-white to-[#F8FBF9] shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
                     >
                       <div className="font-bold text-[#063324]">{rec.title}</div>
-                      <div className="text-sm text-[#063324]/70 mt-1">
-                        {rec.summary}
-                      </div>
-                      <div className="text-lg font-bold text-emerald-600 mt-2">
-                        {rec.price}
-                      </div>
+                      <div className="text-sm text-[#063324]/70 mt-1">{rec.summary}</div>
+                      <div className="text-lg font-bold text-emerald-600 mt-2">{rec.price}</div>
                     </div>
                   ))}
                 </div>
-                <button className="w-full bg-[#063324] text-white py-3 rounded-2xl font-bold hover:translate-y-[-1px] transition-transform">
-                  Call a Representative
+                <button className="w-full bg-[#063324] text-white py-3 rounded-2xl font-bold hover:translate-y-[-1px] transition-transform flex items-center justify-center gap-2">
+                  📞 Call a Representative
                 </button>
               </div>
             )}
@@ -467,68 +518,90 @@ export default function VoiceConcierge() {
                 {error}
               </div>
             )}
-
-            {/* Audio Player */}
-            {audioUrl && (
-              <div className="flex items-center gap-3 bg-[#063324]/5 border border-[#063324]/10 rounded-2xl p-4">
-                <div className="w-10 h-10 rounded-full bg-[#063324] text-white flex items-center justify-center font-bold">
-                  ▶
-                </div>
-                <audio controls src={audioUrl} className="w-full" />
-              </div>
-            )}
           </div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Helpful Prompts */}
+          {/* Collected Preferences */}
+          {started && (preferences.city || preferences.budget || preferences.moveInDate) && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-3">
+              <div className="text-sm font-semibold text-emerald-800 uppercase tracking-[0.2em]">
+                ✓ What I Know
+              </div>
+              <div className="space-y-2 text-sm">
+                {preferences.city && (
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <span className="font-medium">City:</span> {preferences.city}
+                  </div>
+                )}
+                {preferences.budget && (
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <span className="font-medium">Budget:</span> {preferences.budget}
+                  </div>
+                )}
+                {preferences.moveInDate && (
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <span className="font-medium">Move-in:</span> {preferences.moveInDate}
+                  </div>
+                )}
+                {preferences.roomType && (
+                  <div className="flex items-center gap-2 text-emerald-700">
+                    <span className="font-medium">Type:</span> {preferences.roomType}
+                  </div>
+                )}
+                {preferences.amenities.length > 0 && (
+                  <div className="flex items-start gap-2 text-emerald-700">
+                    <span className="font-medium">Wants:</span>
+                    <span>{preferences.amenities.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tips */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#063324]/10 space-y-3">
             <div className="text-sm font-semibold text-[#063324]/70 uppercase tracking-[0.2em] flex items-center gap-2">
               <Sparkles className="text-amber-500" size={16} />
-              Helpful Prompts
+              Try Saying
             </div>
             <div className="text-sm text-[#063324]/80 space-y-2">
-              <p className="bg-gray-50 rounded-xl p-3">
-                &quot;I need an en-suite near campus, budget $800.&quot;
+              <p className="bg-gray-50 rounded-xl p-3 hover:bg-[#063324]/5 cursor-pointer transition">
+                &quot;I need a place in Manchester for September&quot;
               </p>
-              <p className="bg-gray-50 rounded-xl p-3">
-                &quot;Moving in next month, quiet area, bills included.&quot;
+              <p className="bg-gray-50 rounded-xl p-3 hover:bg-[#063324]/5 cursor-pointer transition">
+                &quot;Budget around 180 pounds per week&quot;
               </p>
-              <p className="bg-gray-50 rounded-xl p-3">
-                &quot;Studio preferred, but open to shared if close to uni.&quot;
+              <p className="bg-gray-50 rounded-xl p-3 hover:bg-[#063324]/5 cursor-pointer transition">
+                &quot;Looking for an en-suite with bills included&quot;
               </p>
             </div>
           </div>
 
           {/* How It Works */}
-          <div className="bg-[#063324] text-white rounded-2xl p-6 shadow-md border border-[#063324]/20 space-y-3">
+          <div className="bg-[#063324] text-white rounded-2xl p-6 shadow-md space-y-3">
             <div className="text-sm uppercase tracking-[0.2em] font-semibold text-white/70">
               How It Works
             </div>
             <ul className="space-y-2 text-sm leading-relaxed text-white/90">
-              <li>1. Tap &quot;Begin Journey&quot;, then press &quot;Speak&quot;.</li>
-              <li>
-                2. Your voice is transcribed, sent, and echoed back with a
-                follow-up.
-              </li>
-              <li>
-                3. Audio is generated via ElevenLabs using your API key/model.
-              </li>
+              <li>1. Click &quot;Begin Journey&quot; to start</li>
+              <li>2. Speak naturally or type your needs</li>
+              <li>3. I&apos;ll understand and ask follow-ups</li>
+              <li>4. Get personalized housing matches!</li>
             </ul>
           </div>
 
-          {/* Backend Setup Note */}
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-            <h4 className="font-semibold text-green-800 mb-2 text-sm">
-              Ready to Go
-            </h4>
-            <p className="text-xs text-green-700">
-              Connected to Housr AI Cloud.
-            </p>
-          </div>
+          {/* Audio Player */}
+          {audioUrl && (
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#063324]/10">
+              <div className="text-xs font-semibold text-[#063324]/60 mb-2">Last Response</div>
+              <audio controls src={audioUrl} className="w-full" />
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
