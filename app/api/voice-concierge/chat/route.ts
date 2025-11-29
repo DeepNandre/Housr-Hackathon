@@ -206,45 +206,45 @@ function generateResponse(
   return { response, shouldFinalize: false, step };
 }
 
-// City-specific student accommodation database
+// Manchester student accommodation database (primary focus)
 const STUDENT_ACCOMMODATIONS: Record<string, Array<{
   name: string;
   type: "social" | "quiet" | "premium" | "budget";
   basePrice: number;
   features: string[];
   distance: string;
+  area: string;
 }>> = {
   "Manchester": [
-    { name: "iQ Manchester Gardens", type: "social", basePrice: 189, features: ["Rooftop terrace", "Cinema room", "24/7 gym"], distance: "5 min to MMU" },
-    { name: "Unite Students - Oxford Place", type: "quiet", basePrice: 159, features: ["Study rooms", "Quiet floors", "Bills included"], distance: "8 min to UoM" },
-    { name: "Vita Student - First Street", type: "premium", basePrice: 219, features: ["En-suite", "Spa", "Sky lounge"], distance: "City centre" },
-    { name: "Liberty Living - Liberty Point", type: "budget", basePrice: 139, features: ["Bills included", "Laundry", "Common room"], distance: "10 min to campus" },
-    { name: "Student Roost - Lambert & Fairfield", type: "social", basePrice: 175, features: ["Events team", "Games room", "Courtyard"], distance: "Fallowfield" },
-  ],
-  "London": [
-    { name: "Unite Students - Emily Bowes Court", type: "social", basePrice: 289, features: ["400+ rooms", "Events", "Near tube"], distance: "Zone 3" },
-    { name: "iQ Shoreditch", type: "premium", basePrice: 349, features: ["Rooftop", "Gym", "Study pods"], distance: "East London" },
-    { name: "Urbanest King's Cross", type: "quiet", basePrice: 269, features: ["Quiet study", "Library", "24/7 security"], distance: "5 min to UCL" },
-    { name: "Chapter Portobello", type: "premium", basePrice: 319, features: ["Cinema", "Spa", "Concierge"], distance: "Notting Hill" },
-    { name: "Nido Spitalfields", type: "social", basePrice: 279, features: ["Social events", "Sky lounge", "Gym"], distance: "East End" },
-  ],
-  "Leeds": [
-    { name: "iQ Leeds", type: "social", basePrice: 159, features: ["Events", "Gym", "Cinema"], distance: "City centre" },
-    { name: "Unite Students - The Tannery", type: "quiet", basePrice: 139, features: ["Study spaces", "Bills included"], distance: "Near campus" },
-    { name: "Vita Student Leeds", type: "premium", basePrice: 189, features: ["En-suite", "Breakfast included", "Spa"], distance: "Headrow" },
-    { name: "Student Roost - Pennine House", type: "budget", basePrice: 119, features: ["Affordable", "Good location"], distance: "10 min walk" },
-  ],
-  "Birmingham": [
-    { name: "Unite Students - Staniforth House", type: "social", basePrice: 165, features: ["Social spaces", "Events"], distance: "Near BCU" },
-    { name: "iQ Birmingham", type: "premium", basePrice: 199, features: ["Brand new", "Gym", "Cinema"], distance: "City centre" },
-    { name: "The Toybox", type: "quiet", basePrice: 149, features: ["Study rooms", "Quiet environment"], distance: "Digbeth" },
-    { name: "Nature House", type: "budget", basePrice: 129, features: ["Bills included", "Garden"], distance: "Selly Oak" },
+    // Premium Options
+    { name: "Vita Student First Street", type: "premium", basePrice: 219, features: ["Private en-suite", "Breakfast included", "On-site spa & gym"], distance: "2 min walk to MMU", area: "City Centre" },
+    { name: "iQ Manchester Gardens", type: "premium", basePrice: 199, features: ["Rooftop terrace", "Cinema room", "24/7 gym"], distance: "5 min to MMU", area: "City Centre" },
+    { name: "Mansion Point", type: "premium", basePrice: 209, features: ["Penthouse views", "Private study pods", "Concierge service"], distance: "Near Piccadilly", area: "City Centre" },
+    
+    // Social/Lively Options
+    { name: "Student Roost Fallowfield", type: "social", basePrice: 165, features: ["Weekly events", "BBQ area", "Games room"], distance: "Near Owens Park", area: "Fallowfield" },
+    { name: "iQ Wilmslow Park", type: "social", basePrice: 175, features: ["Common rooms", "Social events", "Bike storage"], distance: "10 min to UoM", area: "Fallowfield" },
+    { name: "Fresh Student Living - Lambert & Fairfield", type: "social", basePrice: 159, features: ["Lively community", "Courtyard parties", "Near nightlife"], distance: "Student area", area: "Fallowfield" },
+    { name: "Liberty Heights", type: "social", basePrice: 169, features: ["Rooftop socials", "Gaming lounge", "Near Oxford Road"], distance: "5 min to uni", area: "Rusholme" },
+    
+    // Quiet/Studious Options
+    { name: "Unite Students Oxford Place", type: "quiet", basePrice: 155, features: ["Dedicated study rooms", "Quiet floors available", "24/7 library access"], distance: "8 min to UoM", area: "Oxford Road" },
+    { name: "Parkway Gate", type: "quiet", basePrice: 149, features: ["Peaceful location", "Private study areas", "Mature students welcome"], distance: "Near RNCM", area: "City Centre" },
+    { name: "Grafton Street Studios", type: "quiet", basePrice: 145, features: ["Self-contained studios", "Quiet residential street", "Bills included"], distance: "10 min to UoM", area: "Chorlton-on-Medlock" },
+    { name: "The Arch - Hulme", type: "quiet", basePrice: 139, features: ["Study-focused", "No party policy", "Green spaces nearby"], distance: "15 min walk", area: "Hulme" },
+    
+    // Budget Options  
+    { name: "Liberty Point", type: "budget", basePrice: 129, features: ["All bills included", "Free WiFi", "Laundry on-site"], distance: "10 min to campus", area: "Ardwick" },
+    { name: "Moss Court", type: "budget", basePrice: 119, features: ["Affordable", "Basic amenities", "Good transport links"], distance: "Near bus routes", area: "Moss Side" },
+    { name: "Oak House - Fallowfield", type: "budget", basePrice: 125, features: ["Value for money", "Shared kitchen", "Near shops"], distance: "Fallowfield centre", area: "Fallowfield" },
+    { name: "Birley Fields", type: "budget", basePrice: 135, features: ["MMU owned", "Affordable en-suite", "On campus"], distance: "On MMU campus", area: "Hulme" },
   ],
   "default": [
-    { name: "Student Village", type: "social", basePrice: 155, features: ["Community events", "Common room"], distance: "Near campus" },
-    { name: "Campus Lodge", type: "quiet", basePrice: 135, features: ["Study spaces", "Quiet hours"], distance: "5 min walk" },
-    { name: "The Student Hub", type: "premium", basePrice: 185, features: ["En-suite", "Gym", "Modern"], distance: "City centre" },
-    { name: "Budget Studios", type: "budget", basePrice: 115, features: ["Affordable", "Bills included"], distance: "10 min to uni" },
+    // Fallback to Manchester accommodations for demo purposes
+    { name: "Vita Student First Street", type: "premium", basePrice: 219, features: ["Private en-suite", "Breakfast included", "On-site spa"], distance: "City Centre", area: "Manchester" },
+    { name: "Student Roost Fallowfield", type: "social", basePrice: 165, features: ["Weekly events", "Games room", "BBQ area"], distance: "Student area", area: "Manchester" },
+    { name: "Unite Students Oxford Place", type: "quiet", basePrice: 155, features: ["Study rooms", "Quiet floors", "24/7 access"], distance: "Near campus", area: "Manchester" },
+    { name: "Liberty Point", type: "budget", basePrice: 129, features: ["Bills included", "Free WiFi", "Laundry"], distance: "10 min walk", area: "Manchester" },
   ],
 };
 
@@ -299,12 +299,13 @@ function generateRecommendations(prefs: UserPreferences) {
   // Format for display
   return top3.map(acc => {
     const displayPrice = isWeekly ? `£${acc.basePrice}/week` : `£${Math.round(acc.basePrice * 4.3)}/month`;
-    const cityName = cityKey === "default" ? city : cityKey;
     
     return {
-      title: cityKey === "default" ? `${acc.name} - ${city}` : acc.name,
+      title: acc.name,
       price: displayPrice,
-      summary: `${acc.features.slice(0, 2).join(", ")}. ${acc.distance}. ${prefs.moveInDate ? `Available ${prefs.moveInDate}.` : "Flexible dates."}`,
+      summary: `${acc.area} • ${acc.features.slice(0, 2).join(", ")}. ${acc.distance}.`,
+      area: acc.area,
+      features: acc.features,
     };
   });
 }
