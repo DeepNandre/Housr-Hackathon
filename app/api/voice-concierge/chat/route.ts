@@ -206,6 +206,48 @@ function generateResponse(
   return { response, shouldFinalize: false, step };
 }
 
+// City-specific student accommodation database
+const STUDENT_ACCOMMODATIONS: Record<string, Array<{
+  name: string;
+  type: "social" | "quiet" | "premium" | "budget";
+  basePrice: number;
+  features: string[];
+  distance: string;
+}>> = {
+  "Manchester": [
+    { name: "iQ Manchester Gardens", type: "social", basePrice: 189, features: ["Rooftop terrace", "Cinema room", "24/7 gym"], distance: "5 min to MMU" },
+    { name: "Unite Students - Oxford Place", type: "quiet", basePrice: 159, features: ["Study rooms", "Quiet floors", "Bills included"], distance: "8 min to UoM" },
+    { name: "Vita Student - First Street", type: "premium", basePrice: 219, features: ["En-suite", "Spa", "Sky lounge"], distance: "City centre" },
+    { name: "Liberty Living - Liberty Point", type: "budget", basePrice: 139, features: ["Bills included", "Laundry", "Common room"], distance: "10 min to campus" },
+    { name: "Student Roost - Lambert & Fairfield", type: "social", basePrice: 175, features: ["Events team", "Games room", "Courtyard"], distance: "Fallowfield" },
+  ],
+  "London": [
+    { name: "Unite Students - Emily Bowes Court", type: "social", basePrice: 289, features: ["400+ rooms", "Events", "Near tube"], distance: "Zone 3" },
+    { name: "iQ Shoreditch", type: "premium", basePrice: 349, features: ["Rooftop", "Gym", "Study pods"], distance: "East London" },
+    { name: "Urbanest King's Cross", type: "quiet", basePrice: 269, features: ["Quiet study", "Library", "24/7 security"], distance: "5 min to UCL" },
+    { name: "Chapter Portobello", type: "premium", basePrice: 319, features: ["Cinema", "Spa", "Concierge"], distance: "Notting Hill" },
+    { name: "Nido Spitalfields", type: "social", basePrice: 279, features: ["Social events", "Sky lounge", "Gym"], distance: "East End" },
+  ],
+  "Leeds": [
+    { name: "iQ Leeds", type: "social", basePrice: 159, features: ["Events", "Gym", "Cinema"], distance: "City centre" },
+    { name: "Unite Students - The Tannery", type: "quiet", basePrice: 139, features: ["Study spaces", "Bills included"], distance: "Near campus" },
+    { name: "Vita Student Leeds", type: "premium", basePrice: 189, features: ["En-suite", "Breakfast included", "Spa"], distance: "Headrow" },
+    { name: "Student Roost - Pennine House", type: "budget", basePrice: 119, features: ["Affordable", "Good location"], distance: "10 min walk" },
+  ],
+  "Birmingham": [
+    { name: "Unite Students - Staniforth House", type: "social", basePrice: 165, features: ["Social spaces", "Events"], distance: "Near BCU" },
+    { name: "iQ Birmingham", type: "premium", basePrice: 199, features: ["Brand new", "Gym", "Cinema"], distance: "City centre" },
+    { name: "The Toybox", type: "quiet", basePrice: 149, features: ["Study rooms", "Quiet environment"], distance: "Digbeth" },
+    { name: "Nature House", type: "budget", basePrice: 129, features: ["Bills included", "Garden"], distance: "Selly Oak" },
+  ],
+  "default": [
+    { name: "Student Village", type: "social", basePrice: 155, features: ["Community events", "Common room"], distance: "Near campus" },
+    { name: "Campus Lodge", type: "quiet", basePrice: 135, features: ["Study spaces", "Quiet hours"], distance: "5 min walk" },
+    { name: "The Student Hub", type: "premium", basePrice: 185, features: ["En-suite", "Gym", "Modern"], distance: "City centre" },
+    { name: "Budget Studios", type: "budget", basePrice: 115, features: ["Affordable", "Bills included"], distance: "10 min to uni" },
+  ],
+};
+
 // Generate realistic property recommendations
 function generateRecommendations(prefs: UserPreferences) {
   const city = prefs.city || "the city";
@@ -219,43 +261,52 @@ function generateRecommendations(prefs: UserPreferences) {
     isWeekly = prefs.budget.includes("week");
   }
 
-  // Adjust pricing based on format
-  const basePrice = isWeekly ? budgetNum : Math.round(budgetNum / 4.3);
+  // Convert monthly to weekly for comparison
+  const weeklyBudget = isWeekly ? budgetNum : Math.round(budgetNum / 4.3);
   
-  // Vibe-based property styles
+  // Determine preferred type based on vibe
   const isQuiet = prefs.vibe?.includes("quiet") || prefs.vibe?.includes("studious");
   const isSocial = prefs.vibe?.includes("social") || prefs.vibe?.includes("lively");
   const isModern = prefs.vibe?.includes("modern") || prefs.vibe?.includes("upscale");
+  const isBudget = prefs.vibe?.includes("budget");
 
-  const properties = [
-    {
-      title: isQuiet ? `Peaceful Studio near ${city} Library` : 
-             isSocial ? `Social Hub - ${city} Student Quarter` :
-             isModern ? `Modern Luxury Apartment - ${city} Central` :
-             `The ${city} Student House`,
-      price: isWeekly ? `£${basePrice}/week` : `£${budgetNum}/month`,
-      summary: isQuiet ? "Quiet residential area, great for studying, 10 min walk to campus." :
-               isSocial ? "Vibrant location, common rooms, regular social events, close to nightlife." :
-               isModern ? "Brand new building, en-suite, gym & cinema room, city centre." :
-               "Friendly atmosphere, bills included, good transport links.",
-    },
-    {
-      title: `${prefs.roomType === "studio" ? "Cozy Studio" : "En-Suite Room"} - ${city} University Area`,
-      price: isWeekly ? `£${basePrice - 25}/week` : `£${budgetNum - 100}/month`,
-      summary: `Great value option. ${prefs.amenities?.includes("bills included") ? "All bills included. " : ""}5 min walk to main campus. ${prefs.moveInDate ? `Available from ${prefs.moveInDate}.` : "Flexible move-in dates."}`,
-    },
-    {
-      title: isQuiet ? `The Study House - ${city}` :
-             isSocial ? `Party Central - ${city} Nightlife District` :
-             `Premium Living - ${city} Waterside`,
-      price: isWeekly ? `£${basePrice + 30}/week` : `£${budgetNum + 120}/month`,
-      summary: isQuiet ? "Dedicated study spaces, quiet hours policy, mature student preferred." :
-               isSocial ? "Rooftop terrace, weekly events, amazing community, right by the action." :
-               "Stunning views, top-spec finish, concierge service, premium amenities.",
-    },
-  ];
+  const preferredType = isBudget ? "budget" : isQuiet ? "quiet" : isSocial ? "social" : isModern ? "premium" : "social";
 
-  return properties;
+  // Get accommodations for city (or default)
+  const cityKey = Object.keys(STUDENT_ACCOMMODATIONS).find(
+    k => k.toLowerCase() === city.toLowerCase()
+  ) || "default";
+  
+  const accommodations = STUDENT_ACCOMMODATIONS[cityKey];
+
+  // Sort by preference match and budget fit
+  const scored = accommodations.map(acc => {
+    let score = 0;
+    // Type match
+    if (acc.type === preferredType) score += 50;
+    // Budget fit (closer to budget = better)
+    const priceDiff = Math.abs(acc.basePrice - weeklyBudget);
+    score += Math.max(0, 50 - priceDiff);
+    // Within budget bonus
+    if (acc.basePrice <= weeklyBudget + 20) score += 20;
+    
+    return { ...acc, score };
+  }).sort((a, b) => b.score - a.score);
+
+  // Take top 3
+  const top3 = scored.slice(0, 3);
+
+  // Format for display
+  return top3.map(acc => {
+    const displayPrice = isWeekly ? `£${acc.basePrice}/week` : `£${Math.round(acc.basePrice * 4.3)}/month`;
+    const cityName = cityKey === "default" ? city : cityKey;
+    
+    return {
+      title: cityKey === "default" ? `${acc.name} - ${city}` : acc.name,
+      price: displayPrice,
+      summary: `${acc.features.slice(0, 2).join(", ")}. ${acc.distance}. ${prefs.moveInDate ? `Available ${prefs.moveInDate}.` : "Flexible dates."}`,
+    };
+  });
 }
 
 export async function POST(request: NextRequest) {
