@@ -47,6 +47,26 @@ export default function PublicVoiceConcierge() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const isProcessingRef = useRef(false);
+  const playbackRef = useRef<HTMLAudioElement | null>(null);
+
+  // Cleanup on unmount - stop audio and speech recognition
+  useEffect(() => {
+    return () => {
+      // Stop any playing audio
+      if (playbackRef.current) {
+        playbackRef.current.pause();
+        playbackRef.current.src = "";
+        playbackRef.current = null;
+      }
+      // Stop speech recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -135,11 +155,17 @@ export default function PublicVoiceConcierge() {
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
 
+      // Stop any existing playback
+      if (playbackRef.current) {
+        playbackRef.current.pause();
+        playbackRef.current.src = "";
+      }
       if (playback) playback.pause();
       
       const audio = new Audio(url);
       audio.onended = () => setIsSpeaking(false);
       audio.onerror = () => setIsSpeaking(false);
+      playbackRef.current = audio; // Store in ref for cleanup
       setPlayback(audio);
       await audio.play();
     } catch (err: any) {
@@ -236,6 +262,13 @@ export default function PublicVoiceConcierge() {
   }, [isListening]);
 
   const resetConversation = useCallback(() => {
+    // Stop any playing audio
+    if (playbackRef.current) {
+      playbackRef.current.pause();
+      playbackRef.current.src = "";
+    }
+    if (playback) playback.pause();
+    
     setStarted(false);
     setFinished(false);
     setMessages([]);
@@ -243,8 +276,9 @@ export default function PublicVoiceConcierge() {
     setPreferences({ amenities: [] });
     setIsListening(false);
     setInterimTranscript("");
+    setIsSpeaking(false);
     if (recognitionRef.current) recognitionRef.current.stop();
-  }, []);
+  }, [playback]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#063324] via-[#0a4a38] to-[#063324]">
