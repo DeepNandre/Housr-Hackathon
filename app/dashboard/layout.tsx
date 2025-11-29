@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Phone, MessageSquare, Mic, BarChart3, LogOut, LayoutDashboard, Zap, UserCircle, Bot, Headphones } from 'lucide-react';
+import { Phone, MessageSquare, Mic, BarChart3, LogOut, LayoutDashboard, Zap, UserCircle, Bot } from 'lucide-react';
 import { UserButton } from "@clerk/nextjs";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -30,12 +30,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <NavItem href="/dashboard/voice-coach" icon={<Mic size={20} />} label="Voice Coach" />
           <NavItem href="/dashboard/voice-agent" icon={<Bot size={20} />} label="Voice Agent" />
           <NavItem href="/dashboard/student-summary" icon={<UserCircle size={20} />} label="Student Summary" />
-          
-          <div className="text-xs font-bold text-[#D2E6DE]/40 uppercase px-4 py-2 mt-6">User Tools</div>
-          <a href="/voice-concierge" target="_blank" className="group flex items-center gap-4 px-6 py-4 text-[#D2E6DE] hover:bg-white/10 hover:text-white rounded-2xl transition-all duration-300">
-            <span className="opacity-70 group-hover:opacity-100 transition-opacity"><Headphones size={20} /></span>
-            <span className="font-semibold">Voice Concierge ↗</span>
-          </a>
           
         </nav>
 

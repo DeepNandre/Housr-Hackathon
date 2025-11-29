@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Phone, MessageSquare, Mic, ArrowRight, Zap, ListTree, Users, Bot, Headphones } from 'lucide-react';
+import { Phone, MessageSquare, Mic, ArrowRight, Zap, ListTree, Users, Bot } from 'lucide-react';
 
 export default function DashboardOverview() {
   return (
@@ -67,14 +67,6 @@ export default function DashboardOverview() {
           description="AI phone agent for student inquiries & lead capture."
           color="bg-violet-50 text-violet-600"
         />
-
-        <ExternalFeatureCard
-          href="/voice-concierge"
-          icon={<Headphones size={24} />}
-          title="Voice Concierge"
-          description="Interactive voice chat to find perfect housing. (User-facing)"
-          color="bg-emerald-50 text-emerald-600"
-        />
       </div>
 
       {/* Quick Stats */}
@@ -121,20 +113,3 @@ const FeatureCard = ({ href, icon, title, description, color, featured }: any) =
   </Link>
 );
 
-const ExternalFeatureCard = ({ href, icon, title, description, color }: any) => (
-  <a href={href} target="_blank" rel="noopener noreferrer">
-    <div className="bg-white p-8 rounded-[2rem] border shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer h-full flex flex-col border-emerald-200 ring-2 ring-emerald-100">
-      <div className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full w-fit mb-4">
-        🌐 USER FEATURE
-      </div>
-      <div className={`w-14 h-14 rounded-2xl ${color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-        {icon}
-      </div>
-      <h3 className="text-xl font-bold mb-3 text-[#063324]">{title}</h3>
-      <p className="text-gray-500 mb-6 flex-1">{description}</p>
-      <div className="flex items-center gap-2 text-[#063324] font-semibold group-hover:gap-4 transition-all">
-        Open Public Page <ArrowRight size={18} />
-      </div>
-    </div>
-  </a>
-);
