@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronDown, Search, Heart, MapPin, Star, ArrowRight, CheckCircle2, Play, Calendar, FileText, Users, Gift, Coffee, Clock } from 'lucide-react';
+import { ChevronDown, Search, Heart, MapPin, Star, ArrowRight, CheckCircle2, Play, Calendar, FileText, Users, Gift, Coffee, Clock, Bot, Mic, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // --- Brand Colors ---
@@ -23,10 +23,10 @@ const Navbar = () => (
         <div className="hidden md:flex items-center gap-6 font-semibold text-[#063324] text-sm">
           <div className="flex items-center gap-1 cursor-pointer">Features <ChevronDown size={14}/></div>
           <a href="#" className="hover:opacity-70">About</a>
-          <a href="#" className="hover:opacity-70">Colleges</a>
           <a href="#" className="hover:opacity-70">Properties</a>
-          <a href="#" className="hover:opacity-70">Perks</a>
-          <a href="#" className="hover:opacity-70">Parents</a>
+          <Link href="/voice-concierge" className="flex items-center gap-1 bg-[#063324] text-white px-3 py-1.5 rounded-full hover:bg-[#154D38] transition">
+            <Bot size={14}/> AI Assistant
+          </Link>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -108,6 +108,9 @@ const Hero = () => (
             <button className="bg-[#D2E6DE] text-[#063324] px-8 py-4 rounded-full font-bold text-lg hover:bg-white transition-colors">
                 Download the app
             </button>
+            <Link href="/voice-concierge" className="bg-white/15 backdrop-blur text-white px-8 py-4 rounded-full font-bold text-lg border border-white/30 hover:bg-white/25 transition-colors flex items-center justify-center gap-2">
+                <Bot size={20}/> Talk to AI Assistant
+            </Link>
         </div>
 
         <div className="flex items-center gap-4 pt-8 opacity-80">
@@ -371,6 +374,98 @@ const FeaturesSection = () => {
     );
 };
 
+// Voice Concierge CTA Section
+const VoiceConciergeSection = () => (
+    <section className="bg-gradient-to-br from-[#063324] via-[#0a5240] to-[#063324] py-24 px-6 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-20 left-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+                {/* Left Content */}
+                <div className="text-white space-y-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-emerald-300 text-sm font-semibold">
+                        <Bot size={18}/> AI-Powered
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-bold leading-tight">
+                        Find your home<br/>by just talking
+                    </h2>
+                    <p className="text-white/70 text-lg max-w-md">
+                        No forms, no filters. Just tell our AI assistant what you&apos;re looking for and get personalized property recommendations instantly.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                        <Link href="/voice-concierge" className="bg-white text-[#063324] px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-xl">
+                            <Mic size={20}/> Start Talking Now
+                        </Link>
+                    </div>
+                    
+                    {/* Features */}
+                    <div className="grid grid-cols-2 gap-4 pt-6">
+                        <div className="flex items-center gap-3 text-white/80">
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                                <MessageCircle size={18}/>
+                            </div>
+                            <span className="text-sm">Natural conversation</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-white/80">
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                                <CheckCircle2 size={18}/>
+                            </div>
+                            <span className="text-sm">Instant matches</span>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Right - Demo Preview */}
+                <div className="relative">
+                    <div className="bg-white rounded-[2rem] shadow-2xl p-6 max-w-md mx-auto">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-[#063324] text-white flex items-center justify-center">
+                                <Bot size={20}/>
+                            </div>
+                            <div>
+                                <div className="font-bold text-[#063324]">Voice Concierge</div>
+                                <div className="text-xs text-gray-500">Powered by AI</div>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-3 mb-4">
+                            <div className="bg-gray-100 rounded-2xl rounded-bl-sm p-3 text-sm text-gray-700 max-w-[80%]">
+                                Hi! What city are you looking to live in?
+                            </div>
+                            <div className="bg-[#063324] rounded-2xl rounded-br-sm p-3 text-sm text-white max-w-[80%] ml-auto">
+                                Manchester, near the uni
+                            </div>
+                            <div className="bg-gray-100 rounded-2xl rounded-bl-sm p-3 text-sm text-gray-700 max-w-[80%]">
+                                Great! What&apos;s your budget per week?
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-full px-4 py-3">
+                            <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center animate-pulse">
+                                <Mic size={16} className="text-white"/>
+                            </div>
+                            <span className="text-gray-400 text-sm">Around 180 pounds...</span>
+                        </div>
+                    </div>
+                    
+                    {/* Floating badges */}
+                    <motion.div 
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ repeat: Infinity, duration: 3 }}
+                        className="absolute -top-4 -right-4 bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg"
+                    >
+                        ✨ Try it free
+                    </motion.div>
+                </div>
+            </div>
+        </div>
+    </section>
+);
+
 const Testimonials = () => (
     <section className="bg-[#FAFAFA] py-24 px-6">
          <div className="max-w-6xl mx-auto">
@@ -450,6 +545,7 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
       <FeaturesSection />
+      <VoiceConciergeSection />
       <Testimonials />
       <Footer />
     </main>
