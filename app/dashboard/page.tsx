@@ -38,7 +38,7 @@ export default function DashboardOverview() {
 
       {/* Quick Stats */}
       <div className="mt-12 bg-white rounded-[2rem] p-8 border border-gray-100 shadow-sm">
-        <h2 className="text-2xl font-bold text-[#063324] mb-6">Today's Overview</h2>
+        <h2 className="text-2xl font-bold text-[#063324] mb-6">Today&apos;s Overview</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-[#063324] mb-1">127</div>
