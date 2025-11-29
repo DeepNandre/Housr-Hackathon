@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
 
     const audioBuffer = await generateVoiceReply(text, voiceId);
 
-    return new NextResponse(audioBuffer, {
+    // Convert Node.js Buffer to Uint8Array for NextResponse compatibility
+    const uint8Array = new Uint8Array(audioBuffer);
+
+    return new NextResponse(uint8Array, {
       headers: {
         "Content-Type": "audio/mpeg",
         "Content-Length": audioBuffer.length.toString(),
