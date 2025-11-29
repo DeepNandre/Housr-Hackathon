@@ -316,7 +316,7 @@ export default function VoiceAgentDemo() {
                   1
                 </div>
                 <p className="text-sm text-gray-600">
-                  Click "Start Call" to connect with the AI voice agent
+                  Click &quot;Start Call&quot; to connect with the AI voice agent
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -332,7 +332,7 @@ export default function VoiceAgentDemo() {
                   3
                 </div>
                 <p className="text-sm text-gray-600">
-                  If you're a potential lead, the agent captures your details
+                  If you&apos;re a potential lead, the agent captures your details
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -358,7 +358,7 @@ export default function VoiceAgentDemo() {
                   key={i}
                   className="text-sm text-gray-600 bg-gray-50 rounded-xl px-4 py-3 hover:bg-violet-50 transition-colors cursor-pointer"
                 >
-                  "{q}"
+                  &quot;{q}&quot;
                 </div>
               ))}
             </div>
