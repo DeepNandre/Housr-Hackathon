@@ -30,9 +30,10 @@ const FALLBACK_TRANSCRIPTS = {
 } as const;
 
 export async function POST(request: NextRequest) {
-  console.log('🎯 Transcription API called');
+  console.log('🎯 Transcription API called - Starting debug');
   
   try {
+    console.log('🔍 Parsing request body...');
     const { callId } = await request.json();
     console.log('📞 Call ID received:', callId);
     
@@ -44,50 +45,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const filename = CALL_FILE_MAP[callId as keyof typeof CALL_FILE_MAP];
-    const audioPath = path.join(process.cwd(), "public", "sample-calls", filename);
+    console.log('✅ Call ID validation passed');
     
-    console.log("📊 Processing transcription request:", {
-      callId,
-      filename,
-      audioPath: audioPath,
-      hasApiKey: !!process.env.ELEVENLABS_API_KEY
-    });
-
-    let transcriptionResult;
-    let usingFallback = false;
-
-    // Try ElevenLabs only if API key is configured
-    if (process.env.ELEVENLABS_API_KEY && fs.existsSync(audioPath)) {
-      try {
-        const audioBuffer = fs.readFileSync(audioPath);
-        console.log("📁 Audio file found, attempting ElevenLabs transcription:", {
-          fileSize: Math.round(audioBuffer.length / 1024) + "KB"
-        });
-        
-        transcriptionResult = await transcribeCall(audioBuffer);
-        console.log("🎯 ElevenLabs transcription successful!");
-      } catch (error) {
-        console.warn("🔄 ElevenLabs transcription failed:", error instanceof Error ? error.message : String(error));
-        usingFallback = true;
-      }
-    } else {
-      if (!process.env.ELEVENLABS_API_KEY) {
-        console.log("🔑 No ElevenLabs API key configured, using fallback");
-      } else {
-        console.log("📁 Audio file not found, using fallback");
-      }
-      usingFallback = true;
-    }
-
-    // Use fallback if ElevenLabs failed or not configured
-    if (usingFallback || !transcriptionResult) {
-      transcriptionResult = FALLBACK_TRANSCRIPTS[callId as keyof typeof FALLBACK_TRANSCRIPTS];
-      console.log('📝 Using fallback transcript for call ID:', callId);
-    }
+    // For now, always use fallback to debug the issue
+    console.log('📝 Using fallback transcript for debugging...');
+    const transcriptionResult = FALLBACK_TRANSCRIPTS[callId as keyof typeof FALLBACK_TRANSCRIPTS];
+    console.log('📄 Fallback transcript loaded:', { length: transcriptionResult.text.length });
 
     // Extract key information from transcript (keeping existing logic)
+    console.log('🔍 Extracting key information...');
     const extractedInfo = extractKeyInformation(transcriptionResult.text);
+    console.log('✅ Key information extracted:', Object.keys(extractedInfo));
 
     const response = {
       transcript: transcriptionResult.text,
@@ -96,7 +64,7 @@ export async function POST(request: NextRequest) {
       extracted_info: extractedInfo
     };
     
-    console.log('✅ Transcription successful, returning:', {
+    console.log('✅ Response prepared, sending back:', {
       textLength: response.transcript.length,
       language: response.language,
       extractedKeys: Object.keys(response.extracted_info)
@@ -105,7 +73,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error("Transcription error:", error);
+    console.error("💥 Transcription error:", error);
     return NextResponse.json(
       { error: "Transcription failed" },
       { status: 500 }
@@ -115,6 +83,7 @@ export async function POST(request: NextRequest) {
 
 // Extract key info from transcript (existing logic kept mostly as-is)
 function extractKeyInformation(transcript: string) {
+  console.log('🔍 Extracting information from transcript...');
   const text = transcript.toLowerCase();
   
   // Budget extraction
@@ -146,6 +115,7 @@ function extractKeyInformation(transcript: string) {
   if (text.includes("transport") || text.includes("bus") || text.includes("tram")) concerns.push("Transport links");
   if (concerns.length === 0) concerns.push("General inquiry");
 
+  console.log('✅ Information extraction complete');
   return {
     budget,
     location,
