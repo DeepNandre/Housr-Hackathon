@@ -9,7 +9,7 @@ export const eleven = process.env.ELEVENLABS_API_KEY
 
 // Default voice ID for Housr voice replies
 // You can find voice IDs in your ElevenLabs dashboard
-export const ELEVENLABS_DEFAULT_VOICE_ID = process.env.ELEVENLABS_DEFAULT_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Default to Rachel voice
+export const ELEVENLABS_DEFAULT_VOICE_ID = process.env.ELEVENLABS_DEFAULT_VOICE_ID || process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM"; // Default to Rachel voice
 
 /**
  * Transcribe audio using ElevenLabs Scribe v1

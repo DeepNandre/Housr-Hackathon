@@ -73,11 +73,11 @@ export default function CallCopilot() {
       return;
     }
     
-    console.log('Starting transcription for call:', selectedCall);
+    console.log('🎯 Starting transcription for call:', selectedCall);
     setIsTranscribing(true);
     
     try {
-      console.log('Making API request to /api/call-copilot/transcribe');
+      console.log('📡 Making API request to /api/call-copilot/transcribe');
       const response = await fetch('/api/call-copilot/transcribe', {
         method: 'POST',
         headers: {
@@ -86,16 +86,16 @@ export default function CallCopilot() {
         body: JSON.stringify({ callId: selectedCall.id }),
       });
 
-      console.log('API response status:', response.status);
+      console.log('📊 API response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('API error:', errorData);
+        console.error('❌ API error:', errorData);
         throw new Error(`Transcription failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
       }
 
       const data = await response.json();
-      console.log('Transcription data received:', data);
+      console.log('✅ Transcription data received:', data);
       
       setTranscriptData({
         transcript: data.transcript,
@@ -104,11 +104,23 @@ export default function CallCopilot() {
         extracted_info: data.extracted_info
       });
       setCurrentStep(3);
-      console.log('Moved to step 3');
+      console.log('➡️ Moved to step 3');
       
     } catch (error) {
-      console.error('Transcription error:', error);
-      alert(`Transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('💥 Transcription error:', error);
+      // Show a more user-friendly error message
+      setTranscriptData({
+        transcript: "Unable to transcribe call. Please check the console for details.",
+        language: "en",
+        confidence: 0,
+        extracted_info: {
+          budget: "Not specified",
+          location: "Not specified", 
+          move_in_date: "Not specified",
+          key_concerns: ["Technical error"]
+        }
+      });
+      setCurrentStep(3); // Continue to next step even if transcription fails
     } finally {
       setIsTranscribing(false);
     }

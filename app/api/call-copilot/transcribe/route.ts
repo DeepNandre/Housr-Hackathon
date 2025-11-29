@@ -47,33 +47,43 @@ export async function POST(request: NextRequest) {
     const filename = CALL_FILE_MAP[callId as keyof typeof CALL_FILE_MAP];
     const audioPath = path.join(process.cwd(), "public", "sample-calls", filename);
     
-    console.log("Processing transcription request:", {
+    console.log("📊 Processing transcription request:", {
       callId,
       filename,
-      audioPath: audioPath
+      audioPath: audioPath,
+      hasApiKey: !!process.env.ELEVENLABS_API_KEY
     });
 
     let transcriptionResult;
+    let usingFallback = false;
 
-    try {
-      // Try to read the actual audio file
-      if (fs.existsSync(audioPath)) {
+    // Try ElevenLabs only if API key is configured
+    if (process.env.ELEVENLABS_API_KEY && fs.existsSync(audioPath)) {
+      try {
         const audioBuffer = fs.readFileSync(audioPath);
-        console.log("Audio file found, sending to ElevenLabs:", {
+        console.log("📁 Audio file found, attempting ElevenLabs transcription:", {
           fileSize: Math.round(audioBuffer.length / 1024) + "KB"
         });
         
-        // Use real ElevenLabs transcription
         transcriptionResult = await transcribeCall(audioBuffer);
-      } else {
-        throw new Error("Audio file not found");
+        console.log("🎯 ElevenLabs transcription successful!");
+      } catch (error) {
+        console.warn("🔄 ElevenLabs transcription failed:", error.message);
+        usingFallback = true;
       }
-    } catch (error) {
-      console.warn("🔄 ElevenLabs transcription failed, using fallback:", error);
-      
-      // Use fallback transcript
+    } else {
+      if (!process.env.ELEVENLABS_API_KEY) {
+        console.log("🔑 No ElevenLabs API key configured, using fallback");
+      } else {
+        console.log("📁 Audio file not found, using fallback");
+      }
+      usingFallback = true;
+    }
+
+    // Use fallback if ElevenLabs failed or not configured
+    if (usingFallback) {
       transcriptionResult = FALLBACK_TRANSCRIPTS[callId as keyof typeof FALLBACK_TRANSCRIPTS];
-      console.log('📝 Using fallback transcript for call ID:', callId, transcriptionResult);
+      console.log('📝 Using fallback transcript for call ID:', callId);
     }
 
     // Extract key information from transcript (keeping existing logic)
