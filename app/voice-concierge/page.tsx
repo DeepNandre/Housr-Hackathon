@@ -12,6 +12,7 @@ type ChatBubble = { role: "bot" | "user"; text: string };
 interface UserPreferences {
   city?: string;
   budget?: string;
+  vibe?: string;
   moveInDate?: string;
   roomType?: string;
   amenities: string[];
@@ -227,7 +228,7 @@ export default function PublicVoiceConcierge() {
     setRecommendations([]);
     setPreferences({ amenities: [] });
     
-    const greeting = "Hi! I'm your Housr housing assistant. I'll help you find the perfect student accommodation. Tell me - what city are you looking in, and when do you need to move?";
+    const greeting = "Hi! I'm your Housr housing assistant. I'll help you find the perfect student accommodation in just 3 quick questions. First up - which city are you looking to live in?";
     setMessages([{ role: "bot", text: greeting }]);
     speak(greeting);
   }, [started, speak]);
@@ -475,16 +476,19 @@ export default function PublicVoiceConcierge() {
             )}
           </div>
 
-          {/* Collected Info Sidebar (for larger screens) */}
-          {started && (preferences.city || preferences.budget) && (
+          {/* Collected Info - Progress tracker */}
+          {started && (preferences.city || preferences.budget || preferences.vibe) && (
             <div className="mt-6 bg-white/10 backdrop-blur rounded-2xl p-5 text-white">
-              <div className="text-sm font-semibold text-emerald-300 mb-3">✓ What I Know About You</div>
+              <div className="text-sm font-semibold text-emerald-300 mb-3">✓ Your Housing Profile</div>
               <div className="flex flex-wrap gap-3">
                 {preferences.city && (
                   <span className="px-3 py-1 bg-white/20 rounded-full text-sm">📍 {preferences.city}</span>
                 )}
                 {preferences.budget && (
                   <span className="px-3 py-1 bg-white/20 rounded-full text-sm">💰 {preferences.budget}</span>
+                )}
+                {preferences.vibe && (
+                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm">✨ {preferences.vibe}</span>
                 )}
                 {preferences.moveInDate && (
                   <span className="px-3 py-1 bg-white/20 rounded-full text-sm">📅 {preferences.moveInDate}</span>
@@ -493,12 +497,24 @@ export default function PublicVoiceConcierge() {
                   <span className="px-3 py-1 bg-white/20 rounded-full text-sm">🏠 {preferences.roomType}</span>
                 )}
               </div>
+              {/* Progress indicator */}
+              <div className="mt-4 flex items-center gap-2">
+                <div className={`h-2 flex-1 rounded-full ${preferences.city ? 'bg-emerald-400' : 'bg-white/20'}`} />
+                <div className={`h-2 flex-1 rounded-full ${preferences.budget ? 'bg-emerald-400' : 'bg-white/20'}`} />
+                <div className={`h-2 flex-1 rounded-full ${preferences.vibe ? 'bg-emerald-400' : 'bg-white/20'}`} />
+              </div>
+              <div className="mt-2 text-xs text-white/60 text-center">
+                {!preferences.city ? "Step 1: Location" : 
+                 !preferences.budget ? "Step 2: Budget" : 
+                 !preferences.vibe ? "Step 3: Vibe" : "✓ Ready for recommendations!"}
+              </div>
             </div>
           )}
 
           {/* Tips */}
-          <div className="mt-8 text-center text-white/60 text-sm">
-            <p>💡 Try saying: &quot;I need a place in Manchester for September, budget around £180 a week&quot;</p>
+          <div className="mt-8 text-center text-white/60 text-sm space-y-1">
+            <p>💡 <strong>3 simple questions:</strong> Location → Budget → Vibe</p>
+            <p className="text-xs">Example: &quot;Manchester&quot; → &quot;£180 a week&quot; → &quot;Social and lively&quot;</p>
           </div>
         </div>
       </main>
