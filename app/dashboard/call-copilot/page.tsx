@@ -61,16 +61,23 @@ export default function CallCopilot() {
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const handleCallSelect = (call: any) => {
+    console.log('Call selected:', call);
     setSelectedCall(call);
     setCurrentStep(2);
+    console.log('Moving to step 2');
   };
 
   const handleTranscribe = async () => {
-    if (!selectedCall) return;
+    if (!selectedCall) {
+      console.log('No call selected');
+      return;
+    }
     
+    console.log('Starting transcription for call:', selectedCall);
     setIsTranscribing(true);
     
     try {
+      console.log('Making API request to /api/call-copilot/transcribe');
       const response = await fetch('/api/call-copilot/transcribe', {
         method: 'POST',
         headers: {
@@ -79,11 +86,16 @@ export default function CallCopilot() {
         body: JSON.stringify({ callId: selectedCall.id }),
       });
 
+      console.log('API response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`Transcription failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API error:', errorData);
+        throw new Error(`Transcription failed: ${response.status} - ${errorData.error || 'Unknown error'}`);
       }
 
       const data = await response.json();
+      console.log('Transcription data received:', data);
       
       setTranscriptData({
         transcript: data.transcript,
@@ -92,10 +104,11 @@ export default function CallCopilot() {
         extracted_info: data.extracted_info
       });
       setCurrentStep(3);
+      console.log('Moved to step 3');
       
     } catch (error) {
       console.error('Transcription error:', error);
-      alert('Transcription failed. Please try another call or check your internet connection.');
+      alert(`Transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsTranscribing(false);
     }

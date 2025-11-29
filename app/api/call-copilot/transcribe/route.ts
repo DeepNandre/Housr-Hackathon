@@ -30,10 +30,14 @@ const FALLBACK_TRANSCRIPTS = {
 } as const;
 
 export async function POST(request: NextRequest) {
+  console.log('🎯 Transcription API called');
+  
   try {
     const { callId } = await request.json();
+    console.log('📞 Call ID received:', callId);
     
     if (!callId || !CALL_FILE_MAP[callId as keyof typeof CALL_FILE_MAP]) {
+      console.error('❌ Invalid call ID:', callId);
       return NextResponse.json(
         { error: "Invalid call ID" },
         { status: 400 }
@@ -65,21 +69,30 @@ export async function POST(request: NextRequest) {
         throw new Error("Audio file not found");
       }
     } catch (error) {
-      console.warn("ElevenLabs transcription failed, using fallback:", error);
+      console.warn("🔄 ElevenLabs transcription failed, using fallback:", error);
       
       // Use fallback transcript
       transcriptionResult = FALLBACK_TRANSCRIPTS[callId as keyof typeof FALLBACK_TRANSCRIPTS];
+      console.log('📝 Using fallback transcript for call ID:', callId, transcriptionResult);
     }
 
     // Extract key information from transcript (keeping existing logic)
     const extractedInfo = extractKeyInformation(transcriptionResult.text);
 
-    return NextResponse.json({
+    const response = {
       transcript: transcriptionResult.text,
       language: transcriptionResult.language_code,
       confidence: transcriptionResult.language_probability,
       extracted_info: extractedInfo
+    };
+    
+    console.log('✅ Transcription successful, returning:', {
+      textLength: response.transcript.length,
+      language: response.language,
+      extractedKeys: Object.keys(response.extracted_info)
     });
+
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error("Transcription error:", error);
