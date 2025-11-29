@@ -10,9 +10,9 @@ type SpeechRecognitionEvent = any;
 type ChatBubble = { role: "bot" | "user"; text: string };
 
 export default function VoiceConcierge() {
-  const backendUrl = (
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001"
-  ).replace(/\/$/, "");
+  // Use local Next.js API routes instead of external Python backend
+  const backendUrl = "/api/voice-concierge";
+  
   const [started, setStarted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +38,7 @@ export default function VoiceConcierge() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const processUserMessageRef = useRef<(text: string) => void>(() => {});
   const sessionId = React.useMemo(() => `session_${Date.now()}`, []);
-  const agentId =
-    process.env.NEXT_PUBLIC_ELEVEN_AGENT_ID ||
-    "agent_6301kb88z22ee3cr98333t8vyw7g";
+  const agentId = process.env.NEXT_PUBLIC_ELEVEN_AGENT_ID || "";
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const followUps = [
@@ -123,9 +121,10 @@ export default function VoiceConcierge() {
     } catch (err: any) {
       let errorMessage = err?.message || "Unable to generate speech";
       if (err.name === "TypeError" && err.message.includes("fetch")) {
-        errorMessage = `Cannot connect to backend at ${backendUrl}. Make sure the backend server is running.`;
+        errorMessage = `Cannot connect to backend. Make sure the API routes are working.`;
       }
       setError(errorMessage);
+      console.error("Voice generation error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -520,16 +519,12 @@ export default function VoiceConcierge() {
           </div>
 
           {/* Backend Setup Note */}
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <h4 className="font-semibold text-amber-800 mb-2 text-sm">
-              Backend Required
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+            <h4 className="font-semibold text-green-800 mb-2 text-sm">
+              Ready to Go
             </h4>
-            <p className="text-xs text-amber-700">
-              This feature requires the Python backend running at{" "}
-              <code className="bg-amber-100 px-1.5 py-0.5 rounded">
-                {backendUrl}
-              </code>
-              . Run <code className="bg-amber-100 px-1.5 py-0.5 rounded">python main.py</code> in the backend folder.
+            <p className="text-xs text-green-700">
+              Connected to Housr AI Cloud.
             </p>
           </div>
         </div>
@@ -537,4 +532,3 @@ export default function VoiceConcierge() {
     </div>
   );
 }
-
