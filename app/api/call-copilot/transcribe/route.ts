@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         transcriptionResult = await transcribeCall(audioBuffer);
         console.log("🎯 ElevenLabs transcription successful!");
       } catch (error) {
-        console.warn("🔄 ElevenLabs transcription failed:", error.message);
+        console.warn("🔄 ElevenLabs transcription failed:", error instanceof Error ? error.message : String(error));
         usingFallback = true;
       }
     } else {
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use fallback if ElevenLabs failed or not configured
-    if (usingFallback) {
+    if (usingFallback || !transcriptionResult) {
       transcriptionResult = FALLBACK_TRANSCRIPTS[callId as keyof typeof FALLBACK_TRANSCRIPTS];
       console.log('📝 Using fallback transcript for call ID:', callId);
     }
