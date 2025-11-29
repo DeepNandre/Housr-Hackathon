@@ -97,7 +97,7 @@ export default function VoiceAgentLeads() {
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard/voice-agent/demo"
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-full hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-200"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#063324] text-white rounded-full hover:bg-[#0a5240] transition-all shadow-lg shadow-[#063324]/20"
             >
               <PhoneCall size={18} />
               Test Voice Agent
@@ -106,7 +106,7 @@ export default function VoiceAgentLeads() {
             <button
               onClick={() => fetchLeads()}
               disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#063324] text-white rounded-full hover:bg-[#063324]/90 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white text-[#063324] border border-[#063324] rounded-full hover:bg-[#F0F7F4] transition-colors disabled:opacity-50"
             >
               <RefreshCw
                 size={16}
@@ -118,7 +118,7 @@ export default function VoiceAgentLeads() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-200">
+          <div className="w-14 h-14 rounded-2xl bg-[#063324] flex items-center justify-center shadow-lg shadow-[#063324]/20">
             <Users className="text-white" size={28} />
           </div>
           <div>
@@ -136,8 +136,8 @@ export default function VoiceAgentLeads() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-              <Users className="text-violet-600" size={20} />
+            <div className="w-10 h-10 rounded-xl bg-[#F0F7F4] flex items-center justify-center">
+              <Users className="text-[#063324]" size={20} />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#063324]">
@@ -150,8 +150,8 @@ export default function VoiceAgentLeads() {
 
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <Calendar className="text-green-600" size={20} />
+            <div className="w-10 h-10 rounded-xl bg-[#F0F7F4] flex items-center justify-center">
+              <Calendar className="text-[#063324]" size={20} />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#063324]">
@@ -170,8 +170,8 @@ export default function VoiceAgentLeads() {
 
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <MapPin className="text-blue-600" size={20} />
+            <div className="w-10 h-10 rounded-xl bg-[#F0F7F4] flex items-center justify-center">
+              <MapPin className="text-[#063324]" size={20} />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#063324]">
@@ -184,8 +184,8 @@ export default function VoiceAgentLeads() {
 
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-              <Sparkles className="text-amber-600" size={20} />
+            <div className="w-10 h-10 rounded-xl bg-[#F0F7F4] flex items-center justify-center">
+              <Sparkles className="text-[#063324]" size={20} />
             </div>
             <div>
               <div className="text-2xl font-bold text-[#063324]">AI</div>
@@ -199,7 +199,7 @@ export default function VoiceAgentLeads() {
       <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="p-16 text-center">
-            <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-[#D2E6DE] border-t-[#063324] rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-500">Loading leads...</p>
           </div>
         ) : error ? (
@@ -217,8 +217,8 @@ export default function VoiceAgentLeads() {
           </div>
         ) : leads.length === 0 ? (
           <div className="p-16 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-violet-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="text-violet-500" size={40} />
+            <div className="w-20 h-20 bg-[#F0F7F4] rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="text-[#063324]" size={40} />
             </div>
             <h3 className="text-xl font-bold text-[#063324] mb-2">
               No leads yet
@@ -229,7 +229,7 @@ export default function VoiceAgentLeads() {
             </p>
             <Link
               href="/dashboard/voice-agent/demo"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-full hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#063324] text-white rounded-full hover:bg-[#0a5240] transition-all shadow-lg"
             >
               <PhoneCall size={20} />
               Try Voice Agent Demo
@@ -239,7 +239,7 @@ export default function VoiceAgentLeads() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-[#063324] to-[#0a5240] text-white">
+                <tr className="bg-[#063324] text-white">
                   <th className="px-6 py-4 text-left text-sm font-semibold">
                     Name
                   </th>
@@ -267,13 +267,13 @@ export default function VoiceAgentLeads() {
                 {leads.map((lead, index) => (
                   <tr
                     key={lead.id}
-                    className={`hover:bg-violet-50/50 transition-colors ${
-                      index === 0 ? "bg-violet-50/30" : ""
+                    className={`hover:bg-[#F0F7F4] transition-colors ${
+                      index === 0 ? "bg-[#F0F7F4]/50" : ""
                     }`}
                   >
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 rounded-full bg-[#063324] flex items-center justify-center text-white font-bold">
                           {lead.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -281,7 +281,7 @@ export default function VoiceAgentLeads() {
                             {lead.name}
                           </div>
                           {index === 0 && (
-                            <span className="inline-flex items-center gap-1 text-xs text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-xs text-[#063324] bg-[#D2E6DE] px-2 py-0.5 rounded-full font-bold">
                               <Sparkles size={10} /> New
                             </span>
                           )}
@@ -307,7 +307,7 @@ export default function VoiceAgentLeads() {
                     <td className="px-6 py-5">
                       {lead.city ? (
                         <div className="flex items-center gap-2">
-                          <MapPin size={14} className="text-blue-500" />
+                          <MapPin size={14} className="text-[#063324]" />
                           <span className="text-[#063324]">{lead.city}</span>
                         </div>
                       ) : (
@@ -317,7 +317,7 @@ export default function VoiceAgentLeads() {
                     <td className="px-6 py-5">
                       {lead.budget ? (
                         <div className="flex items-center gap-2">
-                          <Banknote size={14} className="text-green-500" />
+                          <Banknote size={14} className="text-[#063324]" />
                           <span className="text-[#063324]">{lead.budget}</span>
                         </div>
                       ) : (
@@ -327,7 +327,7 @@ export default function VoiceAgentLeads() {
                     <td className="px-6 py-5">
                       {lead.moveInDate ? (
                         <div className="flex items-center gap-2">
-                          <Calendar size={14} className="text-amber-500" />
+                          <Calendar size={14} className="text-[#063324]" />
                           <span className="text-[#063324]">
                             {lead.moveInDate}
                           </span>
@@ -368,4 +368,3 @@ export default function VoiceAgentLeads() {
     </div>
   );
 }
-

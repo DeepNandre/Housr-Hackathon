@@ -46,7 +46,7 @@ export default function VoiceAgentOverview() {
         </div>
 
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-violet-100 text-violet-700 rounded-full text-sm font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#D2E6DE] text-[#063324] rounded-full text-sm font-bold mb-6">
             <Zap size={16} />
             AI-Powered Voice Support
           </div>
@@ -63,32 +63,37 @@ export default function VoiceAgentOverview() {
       {/* Quick Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
         <Link href="/dashboard/voice-agent/demo">
-          <div className="bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-[2rem] p-8 hover:shadow-2xl hover:shadow-violet-200 transition-all duration-300 group cursor-pointer h-full">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <PhoneCall size={32} />
-            </div>
-            <h3 className="text-2xl font-bold mb-3">Try Voice Demo</h3>
-            <p className="text-violet-100 mb-6">
-              Experience the AI voice agent in action. Start a simulated call
-              and test the conversation flow.
-            </p>
-            <div className="flex items-center gap-2 font-semibold group-hover:gap-4 transition-all">
-              Start Demo Call <ArrowRight size={20} />
+          <div className="bg-[#063324] text-white rounded-[2rem] p-8 hover:shadow-2xl hover:shadow-[#063324]/20 transition-all duration-300 group cursor-pointer h-full relative overflow-hidden">
+            {/* Decorative Background */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#D2E6DE] rounded-full blur-[100px] opacity-10 pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+            
+            <div className="relative z-10">
+              <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform backdrop-blur-sm border border-white/10">
+                <PhoneCall size={32} className="text-[#D2E6DE]" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">Try Voice Demo</h3>
+              <p className="text-[#D2E6DE]/80 mb-6">
+                Experience the AI voice agent in action. Start a simulated call
+                and test the conversation flow.
+              </p>
+              <div className="flex items-center gap-2 font-semibold text-[#D2E6DE] group-hover:gap-4 transition-all">
+                Start Demo Call <ArrowRight size={20} />
+              </div>
             </div>
           </div>
         </Link>
 
         <Link href="/dashboard/voice-agent/leads">
           <div className="bg-white border border-gray-100 rounded-[2rem] p-8 hover:shadow-xl transition-all duration-300 group cursor-pointer h-full">
-            <div className="w-16 h-16 rounded-2xl bg-[#063324] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Users className="text-white" size={32} />
+            <div className="w-16 h-16 rounded-2xl bg-[#F0F7F4] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Users className="text-[#063324]" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-[#063324] mb-3">
               View Captured Leads
             </h3>
             <p className="text-gray-500 mb-6">
               Review all leads automatically captured by the voice agent.
-              Currently tracking {leadCount} leads.
+              Currently tracking <span className="font-bold text-[#063324]">{leadCount} leads</span>.
             </p>
             <div className="flex items-center gap-2 font-semibold text-[#063324] group-hover:gap-4 transition-all">
               View Leads <ArrowRight size={20} />
@@ -104,9 +109,9 @@ export default function VoiceAgentOverview() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="w-14 h-14 rounded-2xl bg-violet-100 flex items-center justify-center mx-auto mb-4">
-              <Phone className="text-violet-600" size={28} />
+          <div className="text-center group">
+            <div className="w-14 h-14 rounded-2xl bg-[#F0F7F4] flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D2E6DE] transition-colors">
+              <Phone className="text-[#063324]" size={28} />
             </div>
             <h4 className="font-bold text-[#063324] mb-2">Inbound Calls</h4>
             <p className="text-gray-500 text-sm">
@@ -115,9 +120,9 @@ export default function VoiceAgentOverview() {
             </p>
           </div>
 
-          <div className="text-center">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="text-indigo-600" size={28} />
+          <div className="text-center group">
+            <div className="w-14 h-14 rounded-2xl bg-[#F0F7F4] flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D2E6DE] transition-colors">
+              <MessageSquare className="text-[#063324]" size={28} />
             </div>
             <h4 className="font-bold text-[#063324] mb-2">Natural Conversation</h4>
             <p className="text-gray-500 text-sm">
@@ -126,9 +131,9 @@ export default function VoiceAgentOverview() {
             </p>
           </div>
 
-          <div className="text-center">
-            <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <Database className="text-green-600" size={28} />
+          <div className="text-center group">
+            <div className="w-14 h-14 rounded-2xl bg-[#F0F7F4] flex items-center justify-center mx-auto mb-4 group-hover:bg-[#D2E6DE] transition-colors">
+              <Database className="text-[#063324]" size={28} />
             </div>
             <h4 className="font-bold text-[#063324] mb-2">Lead Capture</h4>
             <p className="text-gray-500 text-sm">
@@ -141,9 +146,10 @@ export default function VoiceAgentOverview() {
 
       {/* Capabilities */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-gradient-to-br from-[#063324] to-[#0a5240] rounded-[2rem] p-8 text-white">
-          <h3 className="text-xl font-bold mb-6">Agent Capabilities</h3>
-          <div className="space-y-4">
+        <div className="bg-[#063324] rounded-[2rem] p-8 text-white relative overflow-hidden">
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+          <h3 className="text-xl font-bold mb-6 relative z-10">Agent Capabilities</h3>
+          <div className="space-y-4 relative z-10">
             {[
               "Answer FAQs about properties & rent",
               "Provide move-in & viewing information",
@@ -153,8 +159,10 @@ export default function VoiceAgentOverview() {
               "24/7 availability",
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3">
-                <CheckCircle2 className="text-green-400" size={20} />
-                <span className="text-white/90">{item}</span>
+                <div className="bg-[#D2E6DE] rounded-full p-1">
+                  <CheckCircle2 className="text-[#063324]" size={14} />
+                </div>
+                <span className="text-[#D2E6DE] font-medium">{item}</span>
               </div>
             ))}
           </div>
@@ -165,28 +173,28 @@ export default function VoiceAgentOverview() {
             Integration Options
           </h3>
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-              <Globe className="text-blue-500 mt-0.5" size={24} />
+            <div className="flex items-start gap-4 p-4 bg-[#F0F7F4] rounded-2xl border border-[#063324]/5">
+              <Globe className="text-[#063324] mt-0.5" size={24} />
               <div>
-                <h4 className="font-semibold text-[#063324]">Web Widget</h4>
+                <h4 className="font-bold text-[#063324]">Web Widget</h4>
                 <p className="text-sm text-gray-500">
                   Embed voice support directly on your website
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-              <Phone className="text-green-500 mt-0.5" size={24} />
+            <div className="flex items-start gap-4 p-4 bg-[#F0F7F4] rounded-2xl border border-[#063324]/5">
+              <Phone className="text-[#063324] mt-0.5" size={24} />
               <div>
-                <h4 className="font-semibold text-[#063324]">Twilio/SIP</h4>
+                <h4 className="font-bold text-[#063324]">Twilio/SIP</h4>
                 <p className="text-sm text-gray-500">
                   Connect to real phone numbers via Twilio
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-              <Shield className="text-violet-500 mt-0.5" size={24} />
+            <div className="flex items-start gap-4 p-4 bg-[#F0F7F4] rounded-2xl border border-[#063324]/5">
+              <Shield className="text-[#063324] mt-0.5" size={24} />
               <div>
-                <h4 className="font-semibold text-[#063324]">Secure Webhooks</h4>
+                <h4 className="font-bold text-[#063324]">Secure Webhooks</h4>
                 <p className="text-sm text-gray-500">
                   Lead data securely sent to your backend
                 </p>
@@ -197,15 +205,15 @@ export default function VoiceAgentOverview() {
       </div>
 
       {/* ElevenLabs Tool Schema Reference */}
-      <div className="bg-gray-50 rounded-[2rem] p-8 border border-gray-200">
+      <div className="bg-[#F0F7F4] rounded-[2rem] p-8 border border-[#063324]/10">
         <h3 className="text-lg font-bold text-[#063324] mb-4 flex items-center gap-2">
-          <Bot className="text-violet-500" size={24} />
+          <Bot className="text-[#063324]" size={24} />
           ElevenLabs Agent Tool Configuration
         </h3>
         <p className="text-gray-600 mb-4">
-          Configure the <code className="bg-gray-200 px-2 py-1 rounded">create_lead</code> tool in your ElevenLabs Agent dashboard with this schema:
+          Configure the <code className="bg-white border border-gray-200 px-2 py-1 rounded font-mono text-[#063324]">create_lead</code> tool in your ElevenLabs Agent dashboard with this schema:
         </p>
-        <pre className="bg-[#063324] text-green-400 rounded-xl p-6 overflow-x-auto text-sm">
+        <pre className="bg-[#063324] text-[#D2E6DE] rounded-2xl p-6 overflow-x-auto text-sm font-mono shadow-inner">
 {`{
   "name": "create_lead",
   "description": "Create a new housing lead in the Housr backend.",
@@ -229,4 +237,3 @@ export default function VoiceAgentOverview() {
     </div>
   );
 }
-

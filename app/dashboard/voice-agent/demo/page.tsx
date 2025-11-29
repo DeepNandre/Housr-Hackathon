@@ -99,7 +99,7 @@ export default function VoiceAgentDemo() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-200">
+          <div className="w-14 h-14 rounded-2xl bg-[#063324] flex items-center justify-center shadow-lg shadow-[#063324]/20">
             <Bot className="text-white" size={28} />
           </div>
           <div>
@@ -118,7 +118,7 @@ export default function VoiceAgentDemo() {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden">
             {/* Call Header */}
-            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-6">
+            <div className="bg-[#063324] text-white p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
@@ -126,7 +126,7 @@ export default function VoiceAgentDemo() {
                   </div>
                   <div>
                     <h2 className="font-bold text-lg">Housr Voice Assistant</h2>
-                    <p className="text-violet-200 text-sm">
+                    <p className="text-[#D2E6DE] text-sm">
                       Powered by ElevenLabs
                     </p>
                   </div>
@@ -151,14 +151,14 @@ export default function VoiceAgentDemo() {
             {/* Call Body */}
             <div className="p-8">
               {/* Visual Feedback Area */}
-              <div className="relative h-48 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-3xl flex items-center justify-center mb-8 overflow-hidden">
+              <div className="relative h-48 bg-[#F0F7F4] rounded-3xl flex items-center justify-center mb-8 overflow-hidden border border-[#063324]/5">
                 {/* Animated Background */}
                 {isCallActive && (
                   <div className="absolute inset-0">
                     {[...Array(3)].map((_, i) => (
                       <div
                         key={i}
-                        className={`absolute inset-0 rounded-full border-2 border-violet-300/30 ${
+                        className={`absolute inset-0 rounded-full border-2 border-[#063324]/10 ${
                           agentStatus === "speaking" ? "animate-ping" : "opacity-0"
                         }`}
                         style={{
@@ -174,8 +174,8 @@ export default function VoiceAgentDemo() {
                 <div
                   className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${
                     isCallActive
-                      ? "bg-gradient-to-br from-violet-500 to-indigo-600 scale-110 shadow-xl shadow-violet-300"
-                      : "bg-gradient-to-br from-gray-200 to-gray-300"
+                      ? "bg-[#063324] scale-110 shadow-xl shadow-[#063324]/20"
+                      : "bg-gray-200"
                   }`}
                 >
                   {agentStatus === "connecting" ? (
@@ -193,7 +193,7 @@ export default function VoiceAgentDemo() {
                     {[...Array(12)].map((_, i) => (
                       <div
                         key={i}
-                        className={`w-1.5 bg-violet-400 rounded-full transition-all duration-100 ${
+                        className={`w-1.5 bg-[#063324] rounded-full transition-all duration-100 ${
                           agentStatus === "speaking" || agentStatus === "listening"
                             ? "animate-pulse"
                             : ""
@@ -225,7 +225,7 @@ export default function VoiceAgentDemo() {
                   <button
                     onClick={handleStartCall}
                     disabled={agentStatus === "connecting"}
-                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-3 px-8 py-4 bg-[#063324] text-white rounded-full hover:bg-[#0a5240] transition-all shadow-lg shadow-[#063324]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Phone size={24} />
                     <span className="font-semibold text-lg">Start Call</span>
@@ -245,7 +245,7 @@ export default function VoiceAgentDemo() {
 
                     <button
                       onClick={handleEndCall}
-                      className="w-16 h-16 rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-white flex items-center justify-center hover:from-red-600 hover:to-rose-700 transition-all shadow-lg shadow-red-200"
+                      className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-all shadow-lg shadow-red-200"
                     >
                       <PhoneOff size={28} />
                     </button>
@@ -284,17 +284,17 @@ export default function VoiceAgentDemo() {
           </div>
 
           {/* Agent Configuration Note */}
-          <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-5">
+          <div className="mt-6 bg-[#F0F7F4] border border-[#063324]/10 rounded-2xl p-5">
             <div className="flex items-start gap-3">
-              <Lightbulb className="text-amber-600 mt-0.5" size={20} />
+              <Lightbulb className="text-[#063324] mt-0.5" size={20} />
               <div>
-                <h4 className="font-semibold text-amber-800 mb-1">
+                <h4 className="font-bold text-[#063324] mb-1">
                   ElevenLabs Agent Setup
                 </h4>
-                <p className="text-sm text-amber-700">
+                <p className="text-sm text-gray-600">
                   To enable the real voice agent, configure your ElevenLabs Agent
-                  with the <code className="bg-amber-100 px-1.5 py-0.5 rounded">create_lead</code> tool 
-                  pointing to <code className="bg-amber-100 px-1.5 py-0.5 rounded">/api/agents/lead</code>.
+                  with the <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200">create_lead</code> tool 
+                  pointing to <code className="bg-white px-1.5 py-0.5 rounded border border-gray-200">/api/agents/lead</code>.
                   See the tool schema in the setup documentation.
                 </p>
               </div>
@@ -307,12 +307,12 @@ export default function VoiceAgentDemo() {
           {/* How It Works */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-bold text-[#063324] mb-4 flex items-center gap-2">
-              <MessageCircle className="text-violet-500" size={20} />
+              <MessageCircle className="text-[#063324]" size={20} />
               How It Works
             </h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold">
+                <div className="w-6 h-6 rounded-full bg-[#F0F7F4] text-[#063324] flex items-center justify-center text-xs font-bold border border-[#063324]/10">
                   1
                 </div>
                 <p className="text-sm text-gray-600">
@@ -320,7 +320,7 @@ export default function VoiceAgentDemo() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold">
+                <div className="w-6 h-6 rounded-full bg-[#F0F7F4] text-[#063324] flex items-center justify-center text-xs font-bold border border-[#063324]/10">
                   2
                 </div>
                 <p className="text-sm text-gray-600">
@@ -328,7 +328,7 @@ export default function VoiceAgentDemo() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold">
+                <div className="w-6 h-6 rounded-full bg-[#F0F7F4] text-[#063324] flex items-center justify-center text-xs font-bold border border-[#063324]/10">
                   3
                 </div>
                 <p className="text-sm text-gray-600">
@@ -336,7 +336,7 @@ export default function VoiceAgentDemo() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-[#063324] text-white flex items-center justify-center">
                   <CheckCircle2 size={14} />
                 </div>
                 <p className="text-sm text-gray-600">
@@ -349,14 +349,14 @@ export default function VoiceAgentDemo() {
           {/* Sample Questions */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-bold text-[#063324] mb-4 flex items-center gap-2">
-              <Sparkles className="text-amber-500" size={20} />
+              <Sparkles className="text-[#D2E6DE]" fill="#063324" size={20} />
               Try Asking
             </h3>
             <div className="space-y-2">
               {sampleQuestions.map((q, i) => (
                 <div
                   key={i}
-                  className="text-sm text-gray-600 bg-gray-50 rounded-xl px-4 py-3 hover:bg-violet-50 transition-colors cursor-pointer"
+                  className="text-sm text-gray-600 bg-[#F0F7F4] rounded-xl px-4 py-3 hover:bg-[#D2E6DE] transition-colors cursor-pointer border border-transparent hover:border-[#063324]/10"
                 >
                   &quot;{q}&quot;
                 </div>
@@ -365,12 +365,12 @@ export default function VoiceAgentDemo() {
           </div>
 
           {/* Quick Links */}
-          <div className="bg-gradient-to-br from-[#063324] to-[#0a5240] rounded-2xl p-6 text-white">
+          <div className="bg-[#063324] rounded-2xl p-6 text-white">
             <h3 className="font-bold mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <Link
                 href="/dashboard/voice-agent/leads"
-                className="flex items-center gap-3 text-sm text-white/90 hover:text-white transition-colors"
+                className="flex items-center gap-3 text-sm text-[#D2E6DE] hover:text-white transition-colors"
               >
                 <Users size={16} />
                 View All Leads
@@ -379,7 +379,7 @@ export default function VoiceAgentDemo() {
                 href="https://elevenlabs.io/docs/conversational-ai/overview"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 text-sm text-white/90 hover:text-white transition-colors"
+                className="flex items-center gap-3 text-sm text-[#D2E6DE] hover:text-white transition-colors"
               >
                 <Bot size={16} />
                 ElevenLabs Docs
@@ -391,4 +391,3 @@ export default function VoiceAgentDemo() {
     </div>
   );
 }
-
